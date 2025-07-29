@@ -1,0 +1,153 @@
+﻿<UserControl x:Class="TemplateSystem.Views.TemplateView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"           
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TemplateSystem"
+             xmlns:p="http://prismlibrary.com/"
+             xmlns:h="clr-namespace:HalconDotNet;assembly=halcondotnet"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             mc:Ignorable="d" 
+             mah:DialogParticipation.Register="{Binding}"
+             d:DesignHeight="640" d:DesignWidth="1280">
+    <Border CornerRadius="5">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#88B0BAE6" Offset="0"/>
+                <GradientStop Color="Transparent" Offset="1.5"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="6*"/>
+                <ColumnDefinition Width="4*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="197*"/>
+            </Grid.RowDefinitions>
+            <h:HSmartWindowControlWPF Name="halconWPF" HKeepAspectRatio="True" HLineWidth="{Binding LineWidth}" Grid.RowSpan="2">
+                <h:HIconicDisplayObjectWPF IconicObject="{Binding DisplayTemplateImage}"/>
+                <h:HIconicDisplayObjectWPF IconicObject="{Binding DisplayTemplate}"/>
+                <h:HIconicDisplayObjectWPF IconicObject="{Binding DisplayWheelContour}" HColor="magenta"/>
+                <h:HIconicDisplayObjectWPF IconicObject="{Binding DisplayTemplateContour}" HColor="medium slate blue"/>
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="HMouseMove">
+                        <p:InvokeCommandAction Command="{Binding HWindowMouseMoveCommand}"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="HMouseDown">
+                        <p:InvokeCommandAction Command="{Binding OnHalconMouseDownCommand}"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="HMouseUp">
+                        <p:InvokeCommandAction Command="{Binding OnHalconMouseUpCommand}" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+
+            </h:HSmartWindowControlWPF>
+            <TextBox Text="{Binding ImageGrayval}" Height="30" Foreground="Black"
+                     HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="16" Margin="0,10,10,0" IsReadOnly="True" Cursor=""/>
+            <Border Width="180" Height="140" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0" Visibility="{Binding RecognitionResultDisplay}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="1.5*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="轮   型:" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding RecognitionWheelType}" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
+                    <TextBlock Text="相似度:" Grid.Row="1" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding RecognitionSimilarity}" Grid.Row="1" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
+                    <TextBlock Text="耗   时:" Grid.Row="2" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding RecognitionConsumptionTime}" Grid.Row="2" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
+                    <TextBlock Text="内圈灰度:" Grid.Row="3" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding InnerCircleGary}" Grid.Row="3" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
+                    <TextBlock Text="全局灰度:" Grid.Row="4" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding FullGary}" Grid.Row="4" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
+                    <TextBlock Text="轮毂半径:" Grid.Row="5" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Radius}" Grid.Row="5" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+            <Grid Grid.Column="1" Grid.RowSpan="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition Height="180"/>
+                </Grid.RowDefinitions>
+                <GroupBox  Header="模板数据" Margin="2" >
+                    <DataGrid x:Name="TemplateDataGrid"  Margin="2,0,2,0" ItemsSource="{Binding TemplateDatas, Mode=TwoWay}" Background="Transparent" BorderThickness="0"  
+                              IsReadOnly="True" FontSize="14" FontWeight="Bold" Foreground="#333" CanUserAddRows="False" AutoGenerateColumns="False"
+                              SelectedItem="{Binding DataGridSelectedItem, Mode=TwoWay}" SelectedIndex="{Binding DataGridSelectedIndex, Mode=TwoWay}"
+                              MouseRightButtonDown="TemplateDataGrid_MouseRightButtonDown">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="序号" Binding="{Binding Index}" Width="0.3*"  />
+                            <DataGridTextColumn Header="轮毂型号" Binding="{Binding WheelType}" Width="0.7*"  />
+                            <DataGridTextColumn Header="未用天数" Binding="{Binding UnusedDays}" Width="0.4*"   />
+                            <DataGridTextColumn Header="轮毂高度" Binding="{Binding WheelHeight}" Width="0.4*"   />
+                            <DataGridTextColumn Header="内圈灰度" Binding="{Binding InnerCircleGary}" Width="0.4*"   />
+                            <DataGridTextColumn Header="轮毂样式" Binding="{Binding WheelStyle}" Width="0.5*"   />
+                            <DataGridTextColumn Header="创建时间" Binding="{Binding CreationTime}"  Width="0.7*" FontSize="12"  />
+                            <DataGridTextColumn Header="更新时间" Binding="{Binding UpdateTime}"  Width="0.7*" FontSize="12"  />
+                        </DataGrid.Columns>
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="MouseLeftButtonDown">
+                                <p:InvokeCommandAction Command="{Binding MouseLeftButtonDownCommand}"
+                               CommandParameter="{Binding Path=., RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type DataGrid}}}"/>
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
+                    </DataGrid>
+                </GroupBox>
+                <GroupBox Grid.Row="1"  Header="模板制作" Margin="2">
+                    <Grid Margin="5,0,5,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Button Grid.Row="0" Grid.Column="0" Content="添加模板"   FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="添加模板"/>
+                        <Button Grid.Row="0" Grid.Column="1" Content="读取图片"   FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="读取图片"/>
+                        <Button Grid.Row="0" Grid.Column="2" Content="显示模板"   FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="显示模板"/>
+                        <Button Grid.Row="1" Grid.Column="1" Content="定位轮毂"   FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="定位轮毂"/>
+                        <Button Grid.Row="1" Grid.Column="2" Content="删除模板"   FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="删除模板"/>
+                        <Button Grid.Row="1" Grid.Column="0" Content="参数设置"   FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="参数设置"/>
+                        <Button Grid.Row="2" Grid.Column="0" Content="{Binding MASKContent}"  FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="{Binding MASKContent}"/>
+                        <Button Grid.Row="2" Grid.Column="1" Content="预览模板"   FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="预览模板"/>
+                        <Button Grid.Row="2" Grid.Column="2" Content="匹配结果"   FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="匹配结果"/>
+                        <Button Grid.Row="3" Grid.Column="0" Content="识别测试"  FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="识别测试"/>
+                        <Button Grid.Row="3" Grid.Column="1" Content="保存模板"  FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="保存模板"/>
+                        <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal">
+                            <Slider  x:Name="EraserSlider" Value="{Binding EraserSize}" Minimum="5" Maximum="50" 
+                                    Width="150" VerticalAlignment="Center" Margin="3,0"/>
+                            <TextBlock  Text="{Binding Value, ElementName=EraserSlider, StringFormat={}{0:F0}}"
+                                    VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        </StackPanel>
+                       
+                    </Grid>
+                </GroupBox>
+            </Grid>
+
+        </Grid>
+    </Border>
+</UserControl>

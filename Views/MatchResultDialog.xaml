@@ -1,0 +1,27 @@
+﻿<UserControl x:Class="TemplateSystem.Views.MatchResultDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TemplateSystem.Views"
+             mc:Ignorable="d" FontFamily="Microsoft YaHei" FontSize="16"
+             Height="400" Width="440">
+    <Border>
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#88B0BAE6" Offset="0"/>
+                <GradientStop Color="Transparent" Offset="1.5"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <DataGrid  ItemsSource="{Binding MatchResultDatas}" Background="Transparent" Margin="0,0,0,15"
+            IsReadOnly="True" FontSize="14" FontWeight="Bold" Foreground="#333" CanUserAddRows="False" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="序号" Binding="{Binding Index}" Width="50"  />
+                <DataGridTextColumn Header="轮毂型号" Binding="{Binding WheelType}" Width="150"  />
+                <DataGridTextColumn Header="相似度" Binding="{Binding Similarity}" Width="50"   />
+                <DataGridTextColumn Header="全图灰度" Binding="{Binding FullFigureGary}" Width="80"   />
+                <DataGridTextColumn Header="内圈灰度" Binding="{Binding InnerCircleGary}" Width="80"   />
+            </DataGrid.Columns>
+        </DataGrid>
+    </Border>
+</UserControl>

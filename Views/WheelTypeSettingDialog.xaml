@@ -1,0 +1,88 @@
+﻿<UserControl x:Class="TemplateSystem.Views.WheelTypeSettingDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:local="clr-namespace:TemplateSystem.Views"
+             mc:Ignorable="d" FontFamily="Microsoft YaHei" FontSize="16"
+             mah:DialogParticipation.Register="{Binding}"
+             Height="450" Width="500" Loaded="UserControl_Loaded">
+    <Border>
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#88B0BAE6" Offset="0"/>
+                <GradientStop Color="Transparent" Offset="1.5"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="250"/>
+                <RowDefinition Height="110"/>
+                <RowDefinition Height="60"/>
+            </Grid.RowDefinitions>
+            <Grid Margin="5" Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.64*"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="轮型ID：" FontSize="20" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" Text="{Binding Id}"  FontSize="20" Height="35" Width="200" 
+                    HorizontalContentAlignment="Center" HorizontalAlignment="Left" Margin="0" IsReadOnly="True"/>
+                </Grid>
+                <Grid Grid.Row="1" Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.64*"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0" Content="轮毂型号：" FontSize="20" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    <TextBox Grid.Column="1" Text="{Binding WheelType}"   FontSize="20" Height="35" Width="200" Name="tbw"
+                    HorizontalContentAlignment="Center" HorizontalAlignment="Left"/>
+                </Grid>
+                <Grid Grid.Row="2" Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.64*"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0" Content="轮毂高度：" FontSize="20" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    <TextBox Grid.Column="1" Text="{Binding WheelHeight}"   FontSize="20" Height="35" Width="200" 
+                        HorizontalContentAlignment="Center" HorizontalAlignment="Left"/>
+                </Grid>
+                <Grid Grid.Row="3" Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.64*"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0" Content="轮毂样式：" FontSize="20" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    <ComboBox Grid.Column="1" Name="cmb"  FontSize="18" Height="35" Width="200" 
+                           Text="{Binding WheelStyle}"    HorizontalContentAlignment="Center" HorizontalAlignment="Left"></ComboBox>
+                </Grid>
+            </Grid>
+            <GroupBox Grid.Row="1"  Header="特别注意" FontSize="18" Background="Transparent" Width="440">
+                <Grid Margin="10,0,10,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="同一轮型录入多个模板时，请在轮型后加下划线：“_”" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Grid.Row="1" Text="例如：07119c08_" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Grid.Row="2" Text="可在轮型后加任意多个下划线，且只能加下划线" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="16" FontWeight="Bold"/>
+                </Grid>
+            </GroupBox>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,30,8">
+                <Button Content="确 认" Height="40" Width="100" FontSize="20" Margin="0,0,10,0"
+                        Command="{Binding OkCommand}"/>
+                <Button Content="取 消" Height="40" Width="100" FontSize="20"
+                        Command="{Binding CancelCommand}"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>
