@@ -579,8 +579,12 @@ namespace TemplateSystem.ViewModels
         private void DeleteModel(string name)
         {
             int index = templateDataList.FindIndex((TemplatedataModel x) => x.WheelType == name);
-            templateDataList[index].ReleaseTemplate();
-            templateDataList.RemoveAt(index);
+            if (index!=-1)
+            {
+                templateDataList[index].ReleaseTemplate();
+                templateDataList.RemoveAt(index);
+            }
+            
         }
 
         /// <summary>
