@@ -23,11 +23,12 @@ using MahApps.Metro.Controls.Dialogs;
 using ControlzEx.Standard;
 using Google.Protobuf.Collections;
 using Prism.Events;
+using System.IO.Pipes;
 
 namespace TemplateSystem.ViewModels
 {
     // 定义自定义事件
-    internal class WindowCommunicationEvent : PubSubEvent<List<MatchResultModel>> {}
+    internal class WindowCommunicationEvent : PubSubEvent<List<MatchResultModel>> { }
     internal class TemplateViewModel : BindableBase, IDisposable
     {
         private bool _disposed = false;
@@ -579,12 +580,12 @@ namespace TemplateSystem.ViewModels
         private void DeleteModel(string name)
         {
             int index = templateDataList.FindIndex((TemplatedataModel x) => x.WheelType == name);
-            if (index!=-1)
+            if (index != -1)
             {
                 templateDataList[index].ReleaseTemplate();
                 templateDataList.RemoveAt(index);
             }
-            
+
         }
 
         /// <summary>
@@ -780,7 +781,7 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         private async void PositionHub()
         {
-            if (SourceTemplateImage ==null || !SourceTemplateImage.IsInitialized())
+            if (SourceTemplateImage == null || !SourceTemplateImage.IsInitialized())
             {
                 await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行读取图片或采集图像！");
                 //EventMessage.SystemMessageDisplay("请先执行读取图片或采集图像!", MessageType.Warning);
@@ -1330,7 +1331,7 @@ namespace TemplateSystem.ViewModels
             if (pResult.WheelImage != null)
             {
                 imageRecogn = pResult.WheelImage;
-                
+
 
             }
             else
@@ -1339,7 +1340,7 @@ namespace TemplateSystem.ViewModels
 
             List<RecognitionResultModel> list = new List<RecognitionResultModel>();
             recognitionResult = WheelRecognitionAlgorithm(imageRecogn, templateDataList, AngleStart, AngleExtent, MinSimilarity, out list);
-            FullGary = pResult.FullFigureGary.ToString();   
+            FullGary = pResult.FullFigureGary.ToString();
             recognitionResult.FullFigureGary = pResult.FullFigureGary;
             if (pResult.WheelImage != null)
             {
@@ -1347,7 +1348,7 @@ namespace TemplateSystem.ViewModels
                 InnerCircleGary = pResult.InnerCircleMean.ToString();
                 recognitionResult.InnerCircleGary = pResult.InnerCircleMean;
             }
-               
+
             DateTime endTime = DateTime.Now;
             HObject templateContour = null;
             if (recognitionResult.RecognitionWheelType != "NG")
@@ -1387,6 +1388,8 @@ namespace TemplateSystem.ViewModels
             RecognitionConsumptionTime = Convert.ToString(Convert.ToInt32(consumeTime.TotalMilliseconds)) + " ms"; ;
             RecognitionResultDisplay = Visibility.Visible;
 
+
+            
         }
 
 
@@ -1408,7 +1411,7 @@ namespace TemplateSystem.ViewModels
                 {
 
                     sys_bd_Templatedatamodel returnItem = result.Parameters.GetValue<sys_bd_Templatedatamodel>("Result");
-                   
+
                     DataGridSelectedItem.WheelHeight = returnItem.WheelHeight;
                     DataGridSelectedItem.WheelStyle = returnItem.WheelStyle;
                     DataGridSelectedItem.InnerCircleGary = returnItem.InnerCircleGary;
