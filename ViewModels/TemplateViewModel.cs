@@ -1142,8 +1142,10 @@ namespace TemplateSystem.ViewModels
                 //EventMessage.MessageHelper.GetEvent<TemplateClearEvent>().Publish(string.Empty);
                 //EventMessage.SystemMessageDisplay("模板保存成功，型号是：" + DataGridSelectedItem.WheelType, MessageType.Success);
                 //EventMessage.MessageDisplay("模板保存成功，型号是：" + DataGridSelectedItem.WheelType, true, true);
+                pipeClientUtility.SendMessage("传统视觉模板刷新");
 
             }
+
         }
 
 
@@ -1207,6 +1209,7 @@ namespace TemplateSystem.ViewModels
 
 
                 await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"模板删除成功，轮型是:{wheelType}").ContinueWith(t => Console.WriteLine(t.Result));
+                pipeClientUtility.SendMessage("传统视觉模板刷新");
 
             }
         }
@@ -1241,7 +1244,8 @@ namespace TemplateSystem.ViewModels
                         RemoveMixArea = double.Parse(DialogParametersSet(paraResult, "RemoveMixArea"));
                         TemplateStartAngle = double.Parse(DialogParametersSet(paraResult, "TemplateStartAngle"));
                         TemplateEndAngle = double.Parse(DialogParametersSet(paraResult, "TemplateEndAngle"));
-                        //InitialPara();
+                        //发送指令刷新参数
+                        pipeClientUtility.SendMessage("参数刷新");
                     }
                 }));
 
