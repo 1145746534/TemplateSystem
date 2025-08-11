@@ -501,10 +501,10 @@ namespace TemplateSystem.ViewModels
         /// <param name="inGateContour">浇口轮廓</param>
         private void TemplateWindowDisplay(HObject sourceImage, HObject templateImage, HObject wheelContour, HObject templateContour, HObject gateContour)
         {
-            if (sourceImage != null)
-                DisplayTemplateImage = CloneImageSafely(sourceImage);
-            if (templateImage != null)
-                DisplayTemplate = CloneImageSafely(templateImage);
+
+            DisplayTemplateImage = CloneImageSafely(sourceImage);
+
+            DisplayTemplate = CloneImageSafely(templateImage);
             if (wheelContour != null)
             {
                 LineWidth = 4.0;
@@ -1284,6 +1284,8 @@ namespace TemplateSystem.ViewModels
             }
             else
             {
+                TemplateWindowDisplay(null, null, null, null, null);
+
                 //EventMessage.SystemMessageDisplay("轮型" + DataGridSelectedItem.WheelType + "无模板图像，请先录入模板!", MessageType.Warning);
             }
         }
@@ -1393,7 +1395,7 @@ namespace TemplateSystem.ViewModels
             RecognitionResultDisplay = Visibility.Visible;
 
 
-            
+
         }
 
 
