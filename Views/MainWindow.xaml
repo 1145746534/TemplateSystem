@@ -9,7 +9,7 @@
         prism:ViewModelLocator.AutoWireViewModel="True"
         mc:Ignorable="d"
                
-        Title="模板修改" Height="880" Width="1500">
+        Title="模板修改" Height="750" Width="1400">
 
 
     <Grid>
