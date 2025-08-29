@@ -51,9 +51,9 @@
                      SelectedItem="{Binding MessageTemplatedata.WheelStyle, Mode=TwoWay}" HorizontalAlignment="Left" Margin="0,2"></ComboBox>
             <!--<TextBox Grid.Row="1" Grid.Column="3" x:Name="SpokeQuantity_tbx"  HorizontalContentAlignment="Center"
              Text="{Binding MessageTemplatedata.WheelStyle, Mode=TwoWay}" Width="120" FontSize="18" HorizontalAlignment="Left" Margin="0,2"/>-->                      
-            <TextBlock Grid.Row="0" Grid.Column="2" Text="内圈灰度均值：" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Right"/>
+            <TextBlock Grid.Row="0" Grid.Column="2" Text="全局灰度均值：" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Right"/>
             <TextBox Grid.Row="0" Grid.Column="3" x:Name="DarkMaxThreshold_tbx"   HorizontalContentAlignment="Center"
-             Text="{Binding MessageTemplatedata.InnerCircleGary, Mode=TwoWay}" Width="120" FontSize="18" HorizontalAlignment="Left" Margin="0,2"/>
+             Text="{Binding MessageTemplatedata.FullGary, Mode=TwoWay}" Width="120" FontSize="18" HorizontalAlignment="Left" Margin="0,2"/>
             <TextBlock Grid.Row="2" Text="轮毂高度：" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Right"/>
             <TextBox Grid.Row="2" Grid.Column="1"  HorizontalContentAlignment="Center"
                 Text="{Binding MessageTemplatedata.WheelHeight, Mode=TwoWay}" Width="120" FontSize="18" HorizontalAlignment="Left" Margin="0,2" IsReadOnly="False"/>

@@ -101,7 +101,7 @@ namespace TemplateSystem.ViewModels
 
             OkCommand = new DelegateCommand(Ok);
             CancelCommand = new DelegateCommand(Cancel);
-
+            WheelHeight = "0";
         }
         /// <summary>
         /// 取消按钮
@@ -150,12 +150,26 @@ namespace TemplateSystem.ViewModels
                 return;
             }
 
-            var filteredData = TemplateDatas.Where(item => item.WheelType == WheelType).ToList();
-            if (filteredData != null && filteredData.Count > 0)
+            for (int i = 0; i < 200; i++)
             {
-                await this._dialogCoordinator.ShowMessageAsync(this, "错误提示", $"轮型重复，请重新输入！").ContinueWith(t => Console.WriteLine(t.Result));
-                return;
+                List<sys_bd_Templatedatamodel> _filteredData = TemplateDatas.Where(item => item.WheelType == WheelType).ToList();
+                if (_filteredData != null && _filteredData.Count > 0)
+                {
+                    WheelType = WheelType + "_";
+
+                }
+                else
+                {
+                    break;
+                }
             }
+            //var filteredData = TemplateDatas.Where(item => item.WheelType == WheelType).ToList();
+
+            //if (filteredData != null && filteredData.Count > 0)
+            //{
+            //    await this._dialogCoordinator.ShowMessageAsync(this, "错误提示", $"轮型重复，请重新输入！").ContinueWith(t => Console.WriteLine(t.Result));
+            //    return;
+            //}
 
 
             sys_bd_Templatedatamodel data = new sys_bd_Templatedatamodel

@@ -66,18 +66,18 @@
                     <TextBlock Text="{Binding RecognitionSimilarity}" Grid.Row="1" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
                     <TextBlock Text="耗   时:" Grid.Row="2" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding RecognitionConsumptionTime}" Grid.Row="2" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
-                    <TextBlock Text="内圈灰度:" Grid.Row="3" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding InnerCircleGary}" Grid.Row="3" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
+                    <TextBlock Text="样   式:" Grid.Row="3" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Style}" Grid.Row="3" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
                     <TextBlock Text="全局灰度:" Grid.Row="4" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding FullGary}" Grid.Row="4" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
-                    <TextBlock Text="轮毂半径:" Grid.Row="5" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding Radius}" Grid.Row="5" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>
+                    <!--<TextBlock Text="轮毂半径:" Grid.Row="5" FontSize="16" Foreground="Wheat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Radius}" Grid.Row="5" Grid.Column="1" FontSize="16" Foreground="Wheat" VerticalAlignment="Center"/>-->
                 </Grid>
             </Border>
             <Grid Grid.Column="1" Grid.RowSpan="2">
                 <Grid.RowDefinitions>
                     <RowDefinition />
-                    <RowDefinition Height="180"/>
+                    <RowDefinition Height="280"/>
                 </Grid.RowDefinitions>
                 <GroupBox  Header="模板数据" Margin="2" >
                     <DataGrid x:Name="TemplateDataGrid"  Margin="2,0,2,0" ItemsSource="{Binding TemplateDatas, Mode=TwoWay}" Background="Transparent" BorderThickness="0"  
@@ -88,8 +88,7 @@
                             <DataGridTextColumn Header="序号" Binding="{Binding Index}" Width="0.3*"  />
                             <DataGridTextColumn Header="轮毂型号" Binding="{Binding WheelType}" Width="0.7*"  />
                             <DataGridTextColumn Header="未用天数" Binding="{Binding UnusedDays}" Width="0.4*"   />
-                            <DataGridTextColumn Header="轮毂高度" Binding="{Binding WheelHeight}" Width="0.4*"   />
-                            <DataGridTextColumn Header="内圈灰度" Binding="{Binding InnerCircleGary}" Width="0.4*"   />
+                           
                             <DataGridTextColumn Header="轮毂样式" Binding="{Binding WheelStyle}" Width="0.5*"   />
                             <DataGridTextColumn Header="创建时间" Binding="{Binding CreationTime}"  Width="0.7*" FontSize="12"  />
                             <DataGridTextColumn Header="更新时间" Binding="{Binding UpdateTime}"  Width="0.7*" FontSize="12"  />
@@ -114,6 +113,9 @@
                             <RowDefinition/>
                             <RowDefinition/>
                             <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
                         </Grid.RowDefinitions>
                         <Button Grid.Row="0" Grid.Column="0" Content="添加模板"   FontSize="14" 
                                 Command="{Binding TemplateBtnCommand}" CommandParameter="添加模板"/>
@@ -121,29 +123,33 @@
                                 Command="{Binding TemplateBtnCommand}" CommandParameter="读取图片"/>
                         <Button Grid.Row="0" Grid.Column="2" Content="显示模板"   FontSize="14" 
                                 Command="{Binding TemplateBtnCommand}" CommandParameter="显示模板"/>
-                        <Button Grid.Row="1" Grid.Column="1" Content="定位轮毂"   FontSize="14" 
-                                Command="{Binding TemplateBtnCommand}" CommandParameter="定位轮毂"/>
-                        <Button Grid.Row="1" Grid.Column="2" Content="删除模板"   FontSize="14" 
-                                Command="{Binding TemplateBtnCommand}" CommandParameter="删除模板"/>
                         <Button Grid.Row="1" Grid.Column="0" Content="参数设置"   FontSize="14" 
                                 Command="{Binding TemplateBtnCommand}" CommandParameter="参数设置"/>
+                        <Button Name="btn_Circle" Grid.Row="1" Grid.Column="1" Content="画圆"  FontSize="14" 
+                                Click="btn_Circle_Click"/>
+                        <Button Grid.Row="1" Grid.Column="2" Content="删除模板"   FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="删除模板"/>
+                       
                         <Button Grid.Row="2" Grid.Column="0" Content="{Binding MASKContent}"  FontSize="14" 
                                 Command="{Binding TemplateBtnCommand}" CommandParameter="{Binding MASKContent}"/>
-                        <Button Grid.Row="2" Grid.Column="1" Content="预览模板"   FontSize="14" 
-                                Command="{Binding TemplateBtnCommand}" CommandParameter="预览模板"/>
+                        <Button Grid.Row="2" Grid.Column="1" Content="制作模板"   FontSize="14" 
+                                     Command="{Binding TemplateBtnCommand}" CommandParameter="制作模板"/>
                         <Button Grid.Row="2" Grid.Column="2" Content="匹配结果"   FontSize="14" 
                                 Command="{Binding TemplateBtnCommand}" CommandParameter="匹配结果"/>
                         <Button Grid.Row="3" Grid.Column="0" Content="识别测试"  FontSize="14" 
                                 Command="{Binding TemplateBtnCommand}" CommandParameter="识别测试"/>
-                        <Button Grid.Row="3" Grid.Column="1" Content="保存模板"  FontSize="14" 
-                                Command="{Binding TemplateBtnCommand}" CommandParameter="保存模板"/>
+                        <Button Grid.Row="3" Grid.Column="1" Content="保存"  FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="保存"/>
                         <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal">
                             <Slider  x:Name="EraserSlider" Value="{Binding EraserSize}" Minimum="5" Maximum="50" 
                                     Width="150" VerticalAlignment="Center" Margin="3,0"/>
                             <TextBlock  Text="{Binding Value, ElementName=EraserSlider, StringFormat={}{0:F0}}"
                                     VerticalAlignment="Center" Margin="0,0,0,0"/>
                         </StackPanel>
-                       
+
+                        
+
+
                     </Grid>
                 </GroupBox>
             </Grid>

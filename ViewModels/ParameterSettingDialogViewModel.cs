@@ -1,4 +1,5 @@
 ﻿using Prism.Commands;
+using Prism.Events;
 using Prism.Mvvm;
 using Prism.Services.Dialogs;
 using System;
@@ -19,6 +20,7 @@ namespace TemplateSystem.ViewModels
         public string Title => "参数设置";
 
         public event Action<IDialogResult> RequestClose;
+        private readonly IEventAggregator _eventAggregator;
 
         private int _windowMaxThreshold;
         /// <summary>
@@ -67,7 +69,7 @@ namespace TemplateSystem.ViewModels
         {
             get { return _templateStartAngle; }
             set { SetProperty(ref _templateStartAngle, value); }
-        } 
+        }
         private double _templateEndAngle;
         /// <summary>
         /// 剪切制作模板区域的终止角度
@@ -89,10 +91,11 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         public DelegateCommand CancelCommand { get; set; }
 
-        public ParameterSettingDialogViewModel()
+        public ParameterSettingDialogViewModel(IEventAggregator eventAggregator)
         {
             OkCommand = new DelegateCommand(Ok);
             CancelCommand = new DelegateCommand(Cancel);
+            _eventAggregator = eventAggregator;
         }
 
         private void Cancel()
@@ -102,69 +105,25 @@ namespace TemplateSystem.ViewModels
 
         private void Ok()
         {
-            //bool changed = false;
-            //if (WheelMinThresholdValue < 0 || WheelMinThresholdValue > 100)
-            //{
-            //    EventMessage.SystemMessageDisplay("定位轮毂时的最小阈值输入错误，请重新输入!", Models.MessageType.Error);
-            //    return;
-            //}
-            //else
-            //{
-            //    if (SystemDatas.WheelMinThreshold != WheelMinThresholdValue)
-            //    {
-            //        SqlAccess.SystemDatasWrite("WheelMinThreshold", WheelMinThresholdValue.ToString());
-            //        SystemDatas.WheelMinThreshold = WheelMinThresholdValue;
-            //        changed = true;
-            //    }
-            //}
-            //if (WindowMaxThreshold < 0 || WindowMaxThreshold > 200)
-            //{
-            //    EventMessage.SystemMessageDisplay("轮毂窗口最大阈值输入错误，请重新输入!", Models.MessageType.Error);
-            //    return;
-            //}
-            //else
-            //{
-            //    if (SystemDatas.WindowMaxThreshold != WindowMaxThreshold)
-            //    {
-            //        SystemDatas.WindowMaxThreshold = WindowMaxThreshold;
-            //        SqlAccess.SystemDatasWrite("WindowMaxThreshold", WindowMaxThreshold.ToString());
-            //        changed = true;
-            //    }
-            //}
-            //if (RemoveMixAreaValue < 10 || RemoveMixAreaValue > 500)
-            //{
-            //    EventMessage.SystemMessageDisplay("轮毂窗口最小面积输入错误，请重新输入!", Models.MessageType.Error);
-            //    return;
-            //}
-            //else
-            //{
-            //    if (SystemDatas.RemoveMixArea != RemoveMixAreaValue)
-            //    {
-            //        SqlAccess.SystemDatasWrite("RemoveMixArea", RemoveMixAreaValue.ToString());
-            //        SystemDatas.RemoveMixArea = RemoveMixAreaValue;
-            //        changed = true;
-            //    }
+            TemplateAngle angle = new TemplateAngle();
+            angle.TemplateStartAngle = DegreesToRadians(TemplateStartAngle);
+            angle.TemplateEndAngle = DegreesToRadians(TemplateEndAngle);
 
-            //}
-            //if (changed)
-            //{
-            //    EventMessage.MessageHelper.GetEvent<ParameterSettingChangedEvent>().Publish("");
-            //    EventMessage.SystemMessageDisplay("修改成功！", Models.MessageType.Success);
-            //}
-            //RequestClose?.Invoke(new DialogResult());
+            _eventAggregator.GetEvent<AngleChangeEvent>().Publish(angle);
 
-            //定义弹窗结果
-            IDialogResult dialogResult = new DialogResult();
-            //将新增数据添加到弹窗结果的Parameters
-            dialogResult.Parameters.Add("WheelMinThreshold", WheelMinThreshold);
-            dialogResult.Parameters.Add("WheelMinRadius", WheelMinRadius);
-            dialogResult.Parameters.Add("WindowMaxThreshold", WindowMaxThreshold);
-            dialogResult.Parameters.Add("RemoveMixArea", RemoveMixArea);
-            dialogResult.Parameters.Add("TemplateStartAngle", TemplateStartAngle);
-            dialogResult.Parameters.Add("TemplateEndAngle", TemplateEndAngle);
+
+            ////定义弹窗结果
+            //IDialogResult dialogResult = new DialogResult();
+            ////将新增数据添加到弹窗结果的Parameters
+            //dialogResult.Parameters.Add("WheelMinThreshold", WheelMinThreshold);
+            //dialogResult.Parameters.Add("WheelMinRadius", WheelMinRadius);
+            //dialogResult.Parameters.Add("WindowMaxThreshold", WindowMaxThreshold);
+            //dialogResult.Parameters.Add("RemoveMixArea", RemoveMixArea);
+            //dialogResult.Parameters.Add("TemplateStartAngle", TemplateStartAngle);
+            //dialogResult.Parameters.Add("TemplateEndAngle", TemplateEndAngle);
 
             //关闭弹窗并返回弹窗结果
-            RequestClose?.Invoke(dialogResult);
+            //RequestClose?.Invoke(dialogResult);
         }
 
         public bool CanCloseDialog()
@@ -179,7 +138,7 @@ namespace TemplateSystem.ViewModels
 
         public void OnDialogOpened(IDialogParameters parameters)
         {
-            if (parameters.ContainsKey("WheelMinThreshold"))            
+            if (parameters.ContainsKey("WheelMinThreshold"))
                 WheelMinThreshold = parameters.GetValue<int>("WheelMinThreshold");
             if (parameters.ContainsKey("WheelMinRadius"))
                 WheelMinRadius = parameters.GetValue<int>("WheelMinRadius");
@@ -188,12 +147,41 @@ namespace TemplateSystem.ViewModels
             if (parameters.ContainsKey("RemoveMixArea"))
                 RemoveMixArea = parameters.GetValue<double>("RemoveMixArea");
             if (parameters.ContainsKey("TemplateStartAngle"))
-                TemplateStartAngle = parameters.GetValue<double>("TemplateStartAngle");
-            if (parameters.ContainsKey("TemplateEndAngle"))
-                TemplateEndAngle = parameters.GetValue<double>("TemplateEndAngle");
+            {
+                double radians = parameters.GetValue<double>("TemplateStartAngle");
+                TemplateStartAngle = RadiansToDegrees(radians);
+            }
 
-          
+            if (parameters.ContainsKey("TemplateEndAngle"))
+            {
+                double radians = parameters.GetValue<double>("TemplateEndAngle");
+                TemplateEndAngle = RadiansToDegrees(radians);
+            }
+
+
+
         }
+
+        /// <summary>
+        /// 弧度转角度函数
+        /// </summary>
+        /// <param name="radians"></param>
+        /// <returns></returns>
+        public static double RadiansToDegrees(double radians)
+        {
+            return radians * (180.0 / Math.PI);
+        }
+
+        /// <summary>
+        /// 角度转弧度函数
+        /// </summary>
+        /// <param name="degrees"></param>
+        /// <returns></returns>
+        public static double DegreesToRadians(double degrees)
+        {
+            return degrees * (Math.PI / 180.0);
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)

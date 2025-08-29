@@ -66,6 +66,7 @@
     <Compile Include="Models\SystemDatas.cs" />
     <Compile Include="Models\sys_bd_systemsettingsdatamodel.cs" />
     <Compile Include="Models\sys_bd_Templatedatamodel.cs" />
+    <Compile Include="Models\TemplateAngle.cs" />
     <Compile Include="Models\TemplatedataModel.cs" />
     <Compile Include="Util\ImageProcessingHelper.cs" />
     <Compile Include="Util\pipeClientUtility.cs" />

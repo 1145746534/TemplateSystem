@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows;
 using TemplateSystem.Models;
+using System.Runtime.InteropServices;
 
 namespace TemplateSystem.Util
 {
@@ -33,7 +34,7 @@ namespace TemplateSystem.Util
             HOperatorSet.CropPart(image, out croppedImage, x1, y1, TargetWidth, TargetHeight);
         }
         /// <summary>
-        /// 获取灰度图 返回一个新对象
+        /// 彩色图转成灰度图 返回一个新对象
         /// </summary>
         /// <param name="image"></param>
         /// <returns></returns>
@@ -53,6 +54,40 @@ namespace TemplateSystem.Util
             else
                 return image.Clone();
 
+        }
+
+        /// <summary>
+        /// 灰度图转成彩色图
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
+        public static HObject GrayTransRGB(HObject image)
+        {
+            HObject ho_ImageRGB1 = null;
+            HOperatorSet.GenEmptyObj(out ho_ImageRGB1);
+
+            HOperatorSet.CopyImage(image, out HObject ho_DupImage1);
+
+            HOperatorSet.CountChannels(ho_DupImage1, out HTuple hv_Channels);
+
+            if ((int)(new HTuple(hv_Channels.TupleEqual(1))) != 0)
+            {
+               
+                HOperatorSet.GetImagePointer1(ho_DupImage1, out HTuple hv_Pointer, out HTuple hv_Type, out HTuple hv_Width,
+                    out HTuple hv_Height);
+              
+                HOperatorSet.GenImage3(out ho_ImageRGB1, hv_Type, hv_Width, hv_Height, hv_Pointer,
+                    hv_Pointer, hv_Pointer);
+                SafeHalconDispose(hv_Pointer);
+                SafeHalconDispose(hv_Type);
+                SafeHalconDispose(hv_Width);
+                SafeHalconDispose(hv_Height);
+
+            }
+
+            SafeHalconDispose(hv_Channels);
+            SafeDisposeHObject(ref ho_DupImage1);
+            return ho_ImageRGB1;
         }
 
         public static void SafeHalconDispose<T>(T obj) where T : class, IDisposable
@@ -194,6 +229,61 @@ namespace TemplateSystem.Util
             SafeHalconDispose(image);
             return resultModel;
         }
+
+        /// <summary>
+        /// 手动生成轮毂圈
+        /// </summary>
+        /// <param name="imageSource"></param>
+        /// <param name="row"></param>
+        /// <param name="col"></param>
+        /// <param name="radius"></param>
+        /// <returns></returns>
+        public static PositioningWheelResultModel ManuslPositioningWheel(HObject imageSource, double row, double col, double radius)
+        {
+            PositioningWheelResultModel resultModel = new PositioningWheelResultModel();
+            HObject image = null;
+            try
+            {
+                image = CloneImageSafely(imageSource);
+                //全图灰度
+                resultModel.FullFigureGary = (float)GetIntensity(image);
+
+
+
+                resultModel.CenterRow = row;
+                resultModel.CenterColumn = col;
+                resultModel.Radius = radius;
+
+                HOperatorSet.GenCircle(out HObject reducedCircle, row, col, radius);
+                HOperatorSet.GenCircleContourXld(out HObject wheelContour, row, col, radius, 0, (new HTuple(360)).TupleRad(), "positive", 1.0);
+                HOperatorSet.ReduceDomain(image, reducedCircle, out HObject wheelImage);
+                HOperatorSet.Intensity(wheelImage, wheelImage, out HTuple mean, out HTuple deviation); //圈内灰度
+                resultModel.InnerCircleMean = (float)(mean.D);
+                resultModel.WheelImage = wheelImage.Clone();
+                resultModel.WheelContour = wheelContour.Clone();
+
+                SafeHalconDispose(reducedCircle);
+                SafeHalconDispose(wheelImage);
+                SafeHalconDispose(mean);
+                SafeHalconDispose(deviation);
+                SafeHalconDispose(wheelContour);
+
+
+
+
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"PositioningWheelResultModel:{ex.Message}");
+            }
+            SafeHalconDispose(image);
+            return resultModel;
+        }
+
+
+
 
         /// <summary>
         /// 获取图片平均灰度值
@@ -385,9 +475,11 @@ namespace TemplateSystem.Util
                 {
                     if (templateData.Template != null)
                     {
+
                         HOperatorSet.FindNccModel(image, templateData.Template,
                         angleStart, angleExtent, 0.5, 1, 0.5, "true", 0,
                         out HTuple row, out HTuple column, out HTuple angle, out HTuple score);
+
 
                         if (score != null && score.Length > 0 && score.D > 0.6)
                         {
@@ -406,7 +498,7 @@ namespace TemplateSystem.Util
                                 //templateData.UseTemplate();
                                 break;
                             }
-                           
+
                         }
                         SafeHalconDispose(row);
                         SafeHalconDispose(column);
@@ -562,6 +654,99 @@ namespace TemplateSystem.Util
             //}
             //SafeHalconDispose(image);
             //return resultIfFailed;
+        }
+
+
+        public static RecognitionResultModel WheelRecognitionAlgorithm1(HObject imageSource, List<TemplatedataModel> templateDatas, double angleStart,
+                                                                        double angleExtent, double minSimilarity, out List<RecognitionResultModel> recognitionResults)
+        {
+
+
+            HObject image = CloneImageSafely(imageSource); //复制图片
+            float fullGray = (float)GetIntensity(image);
+            RecognitionResultModel result = null;
+            recognitionResults = new List<RecognitionResultModel>();
+            lock (_lock)
+            {
+                foreach (TemplatedataModel templateData in templateDatas)
+                {
+                    if (templateData.Template != null)
+                    {
+                        using (HDevDisposeHelper dh = new HDevDisposeHelper())
+                        {
+                            HOperatorSet.SetGenericShapeModelParam(templateData.Template, "angle_start", (new HTuple(-180)).TupleRad()
+                                );
+                        }
+                        HOperatorSet.SetGenericShapeModelParam(templateData.Template, "border_shape_models", "false");
+
+                        HTuple hv_MatchResultID = new HTuple();
+                        HTuple hv_NumMatchResult = new HTuple();
+                        HOperatorSet.FindGenericShapeModel(image, templateData.Template, out hv_MatchResultID,
+                                                            out hv_NumMatchResult);
+                        // 检查是否找到匹配结果
+                        if (hv_NumMatchResult.I != 0)
+                        {
+                            // 获取所有匹配结果的分数
+                            List<double> scores = new List<double>();
+                            for (int i = 0; i < hv_NumMatchResult.I; i++)
+                            {
+                                HTuple score = new HTuple();
+                                HOperatorSet.GetGenericShapeModelResult(
+                                    hv_MatchResultID,
+                                    i,
+                                    "score",
+                                    out score
+                                );
+                                scores.Add(score.D);
+                            }
+                            // 找到最高分数的索引
+                            double maxValue = scores.Max();
+                            int maxIndex = scores.FindIndex(x => x == maxValue);
+
+                            HOperatorSet.GetGenericShapeModelResultObject(out HObject ho_MatchContour, hv_MatchResultID,
+                                                                            maxIndex, "contours");
+                            RecognitionResultModel temp = new RecognitionResultModel();
+                            temp.RecognitionWheelType = templateData.WheelType;
+                            temp.Similarity = Math.Round(maxValue, 3);
+                            temp.WheelStyle = templateData.WheelStyle;
+                            temp.FullFigureGary = fullGray;
+                            temp.RecognitionContour = ho_MatchContour?.Clone();
+                            recognitionResults.Add(temp);
+                            SafeHalconDispose(ho_MatchContour);
+                            if (maxIndex > 0.85)
+                            {
+                                temp.status = "识别成功";
+                                result = temp;
+                                break;
+                            }
+
+                        }
+
+                        SafeHalconDispose(hv_MatchResultID);
+                        SafeHalconDispose(hv_NumMatchResult);
+
+                    }
+                }
+            }
+            if (result == null) //没有直接匹配到 采用查询的方式
+            {
+                if (TryGetBestMatch(recognitionResults, minSimilarity + 0.05, out result))
+                {
+                    result.status = "识别成功";
+                    
+                }
+                else
+                {
+                    //没有找到合格品
+                    result = new RecognitionResultModel
+                    {
+                        RecognitionWheelType = "NG"
+                    };
+                }
+            }
+            SafeHalconDispose(image);
+            return result;
+
         }
 
         // 辅助方法：从识别结果中找出最高相似度的对象

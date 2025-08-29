@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HalconDotNet;
 
 namespace TemplateSystem.Models
 {
     /// <summary>
     /// 识别结果模型
     /// </summary>
-    internal class RecognitionResultModel
+    internal class RecognitionResultModel : IDisposable
     {
 
         /// <summary>
@@ -78,7 +79,18 @@ namespace TemplateSystem.Models
         /// </summary>
         public double Radian { get; set; }
 
+        /// <summary>
+        /// 识别结果轮毂
+        /// </summary>
+        public HObject RecognitionContour { get; set; }
 
 
+        public  void Dispose()
+        {
+            if (RecognitionContour != null)
+            {
+                RecognitionContour.Dispose();
+            }
+        }
     }
 }

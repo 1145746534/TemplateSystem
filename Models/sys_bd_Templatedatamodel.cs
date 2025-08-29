@@ -16,7 +16,7 @@ namespace TemplateSystem.Models
         private string _wheelType;
         private int _unusedDays;
         private float _wheelHeight;
-        private float _innerCircleGary;
+        private float _fullGary;
         private string _wheelStyle;
         /// <summary>
         /// 序号
@@ -65,13 +65,13 @@ namespace TemplateSystem.Models
         }
 
         /// <summary>
-        /// 内圈灰度
+        /// 全局灰度
         /// </summary>
         [SqlSugar.SugarColumn(IsNullable = false)]
-        public float InnerCircleGary
+        public float FullGary
         {
-            get { return _innerCircleGary; }
-            set { SetProperty(ref _innerCircleGary, value); }
+            get { return _fullGary; }
+            set { SetProperty(ref _fullGary, value); }
         }
 
         private string _creationTime;
@@ -139,7 +139,7 @@ namespace TemplateSystem.Models
                 WheelType = this.WheelType,
                 UnusedDays = this.UnusedDays,
                 WheelHeight = this.WheelHeight,
-                InnerCircleGary = this.InnerCircleGary,
+                FullGary = this.FullGary,
                 WheelStyle = this.WheelStyle,
                 CreationTime = this.CreationTime, // string 是引用类型但不可变
                 UpdateTime = this.UpdateTime,     // DateTime 是值类型

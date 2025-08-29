@@ -7,7 +7,7 @@
              xmlns:local="clr-namespace:TemplateSystem.Views"
              mc:Ignorable="d" FontFamily="Microsoft YaHei" FontSize="16"
              mah:DialogParticipation.Register="{Binding}"
-             Height="400" Width="500">
+             Height="190" Width="300">
     <Border>
         <Border.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -17,37 +17,30 @@
         </Border.Background>
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="8*"/>
+                <RowDefinition Height="4*"/>
                 <RowDefinition Height="3*"/>
             </Grid.RowDefinitions>
-            <Grid Margin="20,10,20,0" Grid.Row="0">
+            <Grid Margin="10,5,10,0" Grid.Row="0">
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition/>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                    <RowDefinition/>
+                    
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
-                    <ColumnDefinition Width="130"/>
+                    <ColumnDefinition Width="160"/>
                 </Grid.ColumnDefinitions>
-                <Label Grid.Row="0" Content="定位轮毂时轮毂边缘的最小阈值(0-100)：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding WheelMinThreshold}" VerticalAlignment="Center" FontSize="20"  Margin="5"/>
-                <Label Grid.Row="1" Content="定位轮毂最小半径：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding WheelMinRadius}"  VerticalAlignment="Center"   FontSize="20" Margin="5"/>
-
-                <Label Grid.Row="2" Grid.Column="0" Content="制作模板时外部窗口最大阈值(1-100)：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding WindowMaxThreshold}"  FontSize="20" Margin="5"/>
-
-                <Label Grid.Row="3" Grid.Column="0" Content="制作模板时剔除窗口部分的最小面积(10-500)：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding RemoveMixArea}"  FontSize="20" Margin="5"/>
-                <Label Grid.Row="4" Grid.Column="0" Content="制作模板时剪切制作模板区域的起始角度：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding TemplateStartAngle}"  FontSize="20" Margin="5"/>
-                <Label Grid.Row="5" Grid.Column="0" Content="制作模板时剪切制作模板区域的终止角度：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding TemplateEndAngle}"  FontSize="20" Margin="5"/>
-
+                <Label Grid.Row="0" Grid.Column="0" Content="模板起始角度：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                <!--<TextBox Grid.Row="0" Grid.Column="1" Text="{Binding TemplateStartAngle}"  FontSize="20" Margin="5"/>-->
+                <mah:NumericUpDown  Grid.Row="0" Grid.Column="1"  FontSize="20" Margin="5"
+                        Value="{Binding TemplateStartAngle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Minimum="1" Maximum="360" Interval="5" StringFormat="F2"  mah:TextBoxHelper.ClearTextButton="False"/>
+                
+                <Label Grid.Row="1" Grid.Column="0" Content="模板终止角度：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                <!--<TextBox Grid.Row="1" Grid.Column="1" Text="{Binding TemplateEndAngle}"  FontSize="20" Margin="5"/>-->
+                <mah:NumericUpDown  Grid.Row="1" Grid.Column="1"  FontSize="20" Margin="5"
+                        Value="{Binding TemplateEndAngle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Minimum="1" Maximum="360" Interval="5" StringFormat="F2"  mah:TextBoxHelper.ClearTextButton="False"/>
 
             </Grid>
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,5,40,10">
