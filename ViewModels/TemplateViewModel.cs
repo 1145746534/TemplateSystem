@@ -1430,6 +1430,11 @@ namespace TemplateSystem.ViewModels
                 if (File.Exists(DataGridSelectedItem.TemplatePath))
                     File.Delete(DataGridSelectedItem.TemplatePath);
 
+                //删除样式               
+                string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".hobj";
+                if (File.Exists(bParh))
+                    File.Delete(bParh);
+
                 int deleteIndex = DataGridSelectedItem.Index - 1; //被删除项
                 string wheelType = DataGridSelectedItem.WheelType;
 
