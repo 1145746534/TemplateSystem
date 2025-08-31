@@ -36,7 +36,7 @@ namespace TemplateSystem.ViewModels
     internal class WindowCommunicationEvent : PubSubEvent<List<MatchResultModel>> { }
     internal class ScrollToIndexEvent : PubSubEvent<int> { }
 
-    internal class AngleChangeEvent : PubSubEvent<TemplateAngle> { }
+    internal class AngleChangeEvent : PubSubEvent<ShapeModelParam> { }
 
 
     internal class TemplateViewModel : BindableBase, IDisposable
@@ -216,6 +216,48 @@ namespace TemplateSystem.ViewModels
         {
             get { return _eraserSize; }
             set { SetProperty(ref _eraserSize, value); }
+        }
+
+        private bool _isSet;
+        /// <summary>
+        /// 是否启用参数
+        /// </summary>
+        public bool IsSet
+        {
+            get { return _isSet; }
+            set
+            {
+                SetProperty(ref _isSet, value);
+            }
+        }
+
+        private int _contrastLow;
+        /// <summary>
+        /// 对比度（低）
+        /// </summary>
+        public int ContrastLow
+        {
+            get { return _contrastLow; }
+            set { SetProperty(ref _contrastLow, value); }
+        }
+
+        private int _contrastHigh;
+        /// <summary>
+        /// 对比度（高）
+        /// </summary>
+        public int ContrastHigh
+        {
+            get { return _contrastHigh; }
+            set { SetProperty(ref _contrastHigh, value); }
+        }
+        private int _minSize;
+        /// <summary>
+        /// 最小组件尺寸
+        /// </summary>
+        public int MinSize
+        {
+            get { return _minSize; }
+            set { SetProperty(ref _minSize, value); }
         }
 
         /// <summary>
@@ -737,26 +779,27 @@ namespace TemplateSystem.ViewModels
         private void TemplateButtonCommand(string obj)
         {
             if (obj == "添加模板") AddTemplate();
-            else if (obj == "读取图片") ReadImage();
-            else if (obj == "显示模板") DisplayTemplates1();
-            else if (obj == "定位轮毂") PositionHub();
-            else if (obj == "删除模板") DelTemplate();
             else if (obj == "参数设置") ParameterSetting();
-            else if (obj == "预览模板") PreviewTemplate();
-            else if (obj == "制作模板") PreviewTemplate1();
             else if (obj == "图像掩膜") MASKClick(obj);
             else if (obj == "关闭掩膜") MASKClick(obj);
-            else if (obj == "匹配结果") MatchResult();
             else if (obj == "识别测试") RecognitionTest();
-            else if (obj == "保存模板") SaveTemplate();
+            else if (obj == "读取图片") ReadImage();
+            else if (obj == "制作模板") PreviewTemplate1();
             else if (obj == "保存") SaveTemplate1();
+            else if (obj == "显示模板") DisplayTemplates1();
+            else if (obj == "删除模板") DelTemplate();
+          
+           
+           
+            else if (obj == "匹配结果") MatchResult();
+            
             //else if (obj == "模板检查") TemplateExamine();
             else return;
         }
 
 
         /// <summary>
-        /// 添加轮型 *
+        /// 添加模板
         /// </summary>
         private void AddTemplate()
         {
@@ -790,210 +833,50 @@ namespace TemplateSystem.ViewModels
 
 
         }
+
         /// <summary>
-        /// 读取图像
+        /// 参数设置
         /// </summary>
-        private void ReadImage()
+        private void ParameterSetting()
         {
             RecognitionResultDisplay = Visibility.Collapsed;
-            var path = HistoricalImagesPath + @"\" + DateTime.Now.Month.ToString() + @"月\" + DateTime.Now.Day.ToString() + @"日";
-            OpenFileDialog openFileDialog = new OpenFileDialog
+            if (!IsParameterSettingDialog)
             {
-                InitialDirectory = HistoricalImagesPath,
-                Title = "请选择要制作模板的图片，当日图像存储路径为：" + path,
-                Filter = "TIF文件|*.tif|JPEG文件|*.jpg|BMP文件|*.bmp|PNG文件|*.png|所有文件(*.*)|*.*",//文件筛选器设定
-                FilterIndex = 1,
-            };
-            if (openFileDialog.ShowDialog() == true)
-            {
-                try
+                IsParameterSettingDialog = true;
+
+                var parameters = new DialogParameters
                 {
-                    var File_Name = openFileDialog.FileName;
-                    SafeHalconDispose(SourceTemplateImage);
-                    HOperatorSet.ReadImage(out HObject image, File_Name);
-                    SourceTemplateImage = image;
+                    { "TemplateStartAngle", TemplateStartAngle },
+                    { "TemplateEndAngle", TemplateEndAngle },
+                    {"ContrastLow",this.ContrastLow},
+                    {"ContrastHigh",this.ContrastHigh},
+                    {"MinSize",this.MinSize}
+                 };
+                _dialogService.Show("ParameterSetting", parameters,
+                    new Action<IDialogResult>((IDialogResult result) =>
+                    {
+                        
+                        IDialogParameters paraResult = result.Parameters;
+                        IsParameterSettingDialog = false;
+                        this.IsSet = false;
+                        this.ContrastLow = 1;
+                        this.ContrastHigh = 1;
+                        this.MinSize = 1;
+                        if (paraResult.Count != 0)
+                        {
 
-                    TemplateWindowDisplay(SourceTemplateImage, null, null, null, null);
-                }
-                catch (Exception ex)
-                {
-                    //EventMessage.SystemMessageDisplay(ex.Message, MessageType.Error);
-                }
+                            //WheelMinThreshold = int.Parse(DialogParametersSet(paraResult, "WheelMinThreshold"));
+                            //WheelMinRadius = int.Parse(DialogParametersSet(paraResult, "WheelMinRadius"));
+                            //WindowMaxThreshold = int.Parse(DialogParametersSet(paraResult, "WindowMaxThreshold"));
+                            //RemoveMixArea = double.Parse(DialogParametersSet(paraResult, "RemoveMixArea"));
+                            //TemplateStartAngle = double.Parse(DialogParametersSet(paraResult, "TemplateStartAngle"));
+                            //TemplateEndAngle = double.Parse(DialogParametersSet(paraResult, "TemplateEndAngle"));
+                            //发送指令刷新参数
+                            //pipeClientUtility.SendMessage("参数刷新");
+                        }
+                    }));
             }
         }
-
-        /// <summary>
-        /// 定位轮毂
-        /// </summary>
-        private async void PositionHub()
-        {
-            if (SourceTemplateImage == null || !SourceTemplateImage.IsInitialized())
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行读取图片或采集图像！");
-                //EventMessage.SystemMessageDisplay("请先执行读取图片或采集图像!", MessageType.Warning);
-                return;
-            }
-            try
-            {
-
-                PositioningWheelResultModel pResult = PositioningWheel(SourceTemplateImage, WheelMinThreshold, 255, WheelMinRadius, false);
-                if (pResult.WheelImage == null)
-                {
-                    await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"定位轮毂失败，请调整轮毂阈值参数后再试！");
-                    //EventMessage.SystemMessageDisplay("定位轮毂失败，请调整轮毂阈值参数后再试!", MessageType.Warning);
-                    return;
-                }
-                else
-                {
-                    //EventMessage.SystemMessageDisplay($"轮毂半径：{pResult.Radius.D}。", MessageType.Default);
-                    //pResult.CenterColumn?.Dispose();
-                    //pResult.CenterRow?.Dispose();
-                    //pResult.Radius?.Dispose();
-
-                    InPoseWheelImage = CloneImageSafely(pResult.WheelImage);
-
-                    TemplateWindowDisplay(SourceTemplateImage, null, pResult.WheelContour, null, null);
-                    pResult.WheelContour.Dispose();
-                    FullGary = pResult.FullFigureGary.ToString();
-                    pResult.Dispose();
-                    pResult = null;
-                }
-            }
-            catch (Exception ex)
-            {
-                //EventMessage.SystemMessageDisplay(ex.Message, MessageType.Error);
-                return;
-            }
-        }
-
-        /// <summary>
-        /// 手动定位轮毂
-        /// </summary>
-        public async void ManuslPositionHub(double row, double col, double radius)
-        {
-            if (SourceTemplateImage == null || !SourceTemplateImage.IsInitialized())
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行读取图片！");
-                //EventMessage.SystemMessageDisplay("请先执行读取图片或采集图像!", MessageType.Warning);
-                return;
-            }
-            try
-            {
-
-                PositioningWheelResultModel pResult = ManuslPositioningWheel(SourceTemplateImage, row, col, radius);
-
-
-
-                InPoseWheelImage = CloneImageSafely(pResult.WheelImage);
-                circleRow = row;
-                circleCol = col;
-                circleRadius = radius;
-                TemplateWindowDisplay(SourceTemplateImage, null, pResult.WheelContour, null, null);
-                pResult.WheelContour.Dispose();
-                FullGary = pResult.FullFigureGary.ToString();
-                pResult.Dispose();
-                pResult = null;
-
-            }
-            catch (Exception ex)
-            {
-                //EventMessage.SystemMessageDisplay(ex.Message, MessageType.Error);
-                return;
-            }
-        }
-
-        /// <summary>
-        /// 预览模板
-        /// </summary>
-        private async void PreviewTemplate()
-        {
-
-
-            if (InPoseWheelImage == null || !InPoseWheelImage.IsInitialized())
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行定位轮毂！").ContinueWith(t => Console.WriteLine(t.Result));
-                //EventMessage.SystemMessageDisplay("请先执行定位轮毂!", MessageType.Warning);
-                return;
-            }
-            HOperatorSet.InnerCircle(InPoseWheelImage, out HTuple row, out HTuple column, out HTuple radius);
-            //根据轮毂生成一个90度扇形区域
-            HOperatorSet.GenCircleSector(out circleSector, row, column, radius, TemplateStartAngle, TemplateEndAngle);
-            //剪切制作模板的区域
-            HOperatorSet.ReduceDomain(InPoseWheelImage, circleSector, out HObject reduced);
-            HOperatorSet.Threshold(reduced, out HObject region, 0, WindowMaxThreshold);
-            HOperatorSet.Connection(region, out HObject connectedRegions);
-            HOperatorSet.ClosingCircle(connectedRegions, out HObject regionClosing, 3.5);
-            HOperatorSet.OpeningCircle(regionClosing, out HObject RegionOpening, 1.5);
-            //HOperatorSet.FillUp(regionClosing, out HObject regionFillUp);
-            HOperatorSet.SelectShape(RegionOpening, out HObject selectedRegions, "area", "and", RemoveMixArea, 999999);
-            HOperatorSet.Union1(selectedRegions, out HObject regionUnion);
-            HOperatorSet.Difference(reduced, regionUnion, out HObject regionDifference);
-            TemplateImage.Dispose();
-            HOperatorSet.ReduceDomain(reduced, regionDifference, out HObject _tImage);
-            TemplateImage = _tImage.Clone();
-            SafeHalconDispose(_tImage);
-            TemplateWindowDisplay(null, TemplateImage, null, null, null);
-            row.Dispose(); column.Dispose(); radius.Dispose(); circleSector.Dispose();
-            reduced.Dispose(); region.Dispose(); connectedRegions.Dispose(); regionClosing.Dispose();
-            RegionOpening.Dispose(); selectedRegions.Dispose(); regionUnion.Dispose();
-            regionDifference.Dispose();
-        }
-
-        /// <summary>
-        /// 制作模板
-        /// </summary>
-        private async void PreviewTemplate1()
-        {
-
-
-            if (InPoseWheelImage == null || !InPoseWheelImage.IsInitialized())
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行定位轮毂！").ContinueWith(t => Console.WriteLine(t.Result));
-                //EventMessage.SystemMessageDisplay("请先执行定位轮毂!", MessageType.Warning);
-                return;
-            }
-            //HOperatorSet.InnerCircle(InPoseWheelImage, out HTuple row, out HTuple column, out HTuple radius);
-
-            //根据轮毂生成一个90度扇形区域
-            //HOperatorSet.GenCircleSector(out circleSector, row, column, radius, TemplateStartAngle, TemplateEndAngle);
-            HOperatorSet.GenCircleSector(out circleSector, circleRow, circleCol, circleRadius, TemplateStartAngle, TemplateEndAngle);
-            //剪切制作模板的区域
-            HOperatorSet.ReduceDomain(InPoseWheelImage, circleSector, out HObject reduced);
-
-            HObject ho_ModelContours, ho_TransContours;
-
-            HTuple hv_ModelRegionArea = new HTuple();
-            HTuple hv_RefRow = new HTuple(), hv_RefColumn = new HTuple();
-            HTuple hv_HomMat2D = new HTuple();
-
-
-            HOperatorSet.CreateGenericShapeModel(out hv_ModelID);
-            HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "metric", "use_polarity");
-            HOperatorSet.TrainGenericShapeModel(reduced, hv_ModelID);
-            HOperatorSet.GetShapeModelContours(out ho_ModelContours, hv_ModelID, 1);
-
-
-            //显示轮毂线条
-            HOperatorSet.AreaCenter(circleSector, out hv_ModelRegionArea, out hv_RefRow,
-       out hv_RefColumn);
-            HOperatorSet.VectorAngleToRigid(0, 0, 0, hv_RefRow, hv_RefColumn, 0, out hv_HomMat2D);
-            HOperatorSet.AffineTransContourXld(ho_ModelContours, out ho_TransContours, hv_HomMat2D);
-
-
-            TemplateWindowDisplay(InPoseWheelImage, null, null, ho_TransContours, null);
-
-            ho_ModelContours?.Dispose();
-            ho_TransContours?.Dispose();
-
-
-            hv_ModelRegionArea?.Dispose();
-            hv_RefRow?.Dispose();
-            hv_RefColumn?.Dispose();
-            hv_HomMat2D?.Dispose();
-
-        }
-
-
 
         /// <summary>
         /// 掩膜
@@ -1137,537 +1020,14 @@ namespace TemplateSystem.ViewModels
                 SafeDisposeHTuple(ref hEraserSize);
             }
         }
-        public void CoverUp(HObject image, double row, double column)
-        {
-            try
-            {
-                //生成橡皮擦擦过的区域 根据鼠标位置和橡皮擦尺寸生成圆形区域
-                HOperatorSet.GenCircle(out HObject ho_EraserRegion, row, column, EraserSize);
-                // 将新擦过的区域添加到已移除区域集合中
-                HObject ExpTmpOutVar_0;
-                HOperatorSet.Union2(ho_Region_Removeds, ho_EraserRegion, out ExpTmpOutVar_0
-                    );
 
-                SafeHalconDispose(ho_EraserRegion);
-                SafeHalconDispose(ho_Region_Removeds);
-                ho_Region_Removeds = ExpTmpOutVar_0;
-                //*获取绘制了感兴趣区域、屏蔽区域的图像（透明色）
-
-                HTuple hv_color = new HTuple();
-                hv_color[0] = 0;
-                hv_color[1] = 0;
-                hv_color[2] = 0;
-                //HOperatorSet.SetColor(hWindowControlWPF.HalconWindow, "red"); // 更改颜色为红色。
-                //HOperatorSet.OverpaintRegion(ImageRGB4, ho_Region_Removeds, hv_color, "fill"); // 填充移除区域。
-                //HOperatorSet.AddImage(srcImageRGB2, ImageRGB4, out HObject ImageResult3, 0.5, 0); // 更新显示效果。
-                HOperatorSet.OverpaintRegion(image, ho_Region_Removeds, hv_color, "fill"); // 填充移除区域。
-                hv_color.Dispose();                                                                 //hv_color.Dispose();
-                                                                                                    //HOperatorSet.AddImage(TemplateImageRGB1, TemplateImageRGB2, out HObject ImageResult3, 0.5, 0); // 更新显示效果。                    
-                                                                                                    //HOperatorSet.DispObj(ImageResult3, hWindowControlWPF.HalconWindow);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"CoverUp:{ex.ToString()}");
-            }
-        }
-
-        // 专门处理 HObject 的释放
-        public static void SafeDisposeHObject(ref HObject obj)
-        {
-            if (obj != null && obj.IsInitialized())
-            {
-                obj.Dispose();
-                obj = null;
-            }
-        }
-
-        // 专门处理 HTuple 的释放
-        public static void SafeDisposeHTuple(ref HTuple tuple)
-        {
-            if (tuple != null)
-            {
-                tuple.Dispose();
-                tuple = null;
-            }
-        }
-        /// <summary>
-        /// 保存模板
-        /// </summary>
-        private async void SaveTemplate()
-        {
-            if (DataGridSelectedItem == null)
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先选择轮型！");
-                //EventMessage.SystemMessageDisplay("请先选择轮型!", MessageType.Warning);
-                return;
-            }
-            if (TemplateImage == null || !TemplateImage.IsInitialized())
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行预览模板！");
-                //EventMessage.SystemMessageDisplay("请先执行预览模板!", MessageType.Warning);
-                return;
-            }
-            MessageDialogResult dialogResult = await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"您选择的轮型是！：《 {DataGridSelectedItem.WheelType} 》，请确定轮型选择正确后，再点击确认！", MessageDialogStyle.AffirmativeAndNegative);
-
-            bool result = dialogResult == MessageDialogResult.Affirmative ? true : false; //WMessageBox.Show("保存确认", "您选择的轮型是：《" + DataGridSelectedItem.WheelType + "》，请确定轮型选择正确后，再点击确认！");
-            if (result)
-            {
-                if (MASKContent == "关闭掩膜")
-                {
-                    MASKClick("关闭掩膜");
-                }
-
-                try
-                {
-                    bool isUpdate = false;
-                    string tPath = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".tif"; //直接覆盖保存
-                    //Halcon中的路径                                                                                                                                                                                                        
-                    string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".ncm";
-                    string existPath = aPath.Replace("/", @"\");
-                    if (File.Exists(existPath))
-                    {
-                        isUpdate = true;
-                    }
-
-                    // NCC模板生成及保存
-                    HTuple nccTemplate = new HTuple();
-
-                    // 在后台线程执行耗时操作
-                    await Task.Run(async () =>
-                    {
-
-                        HOperatorSet.CreateNccModel(TemplateImage, "auto", AngleStart, AngleExtent, 0.05, "use_polarity", out nccTemplate);
-                        // 异步保存模板文件
-                        await Task.WhenAll(
-                            Task.Run(() => HOperatorSet.WriteNccModel(nccTemplate, aPath)),
-                            Task.Run(() => HOperatorSet.WriteImage(TemplateImage, "tiff", 0, tPath))
-                        );
-                    });
-                    SafeHalconDispose(nccTemplate);
-                    // 在UI线程更新数据 (确保线程安全)
-                    if (isUpdate)
-                    {
-                        DataGridSelectedItem.UpdateTime = DateTime.Now;
-                    }
-                    else
-                    {
-                        DataGridSelectedItem.CreationTime = DateTime.Now.ToString("yy-MM-dd HH:mm");
-                        DataGridSelectedItem.UpdateTime = DateTime.Now;
-                    }
-                    DataGridSelectedItem.FullGary = float.Parse(FullGary);
-                    DataGridSelectedItem.TemplatePath = aPath;
-                    DataGridSelectedItem.TemplatePicturePath = tPath;
-                    DataGridSelectedItem.LastUsedTime = DateTime.Now;
-                    if (isUpdate) //更新
-                    {
-                        UpdateTemplate(DataGridSelectedItem.WheelType);
-                    }
-                    else
-                    {
-                        //新增
-                        AddTemplate(DataGridSelectedItem);
-                    }
-                    UpdataTemplateData(DataGridSelectedItem); // 假设这是数据层更新              
-                }
-                finally
-                {
-                    // 确保资源释放
-                    SafeHalconDispose(SourceTemplateImage);
-                    SafeHalconDispose(InPoseWheelImage);
-                    SafeHalconDispose(TemplateImage);
-                    SafeHalconDispose(ho_Region_Removeds);
-
-                }
-
-                //EventMessage.MessageHelper.GetEvent<TemplateClearEvent>().Publish(string.Empty);
-                //EventMessage.SystemMessageDisplay("模板保存成功，型号是：" + DataGridSelectedItem.WheelType, MessageType.Success);
-                //EventMessage.MessageDisplay("模板保存成功，型号是：" + DataGridSelectedItem.WheelType, true, true);
-                pipeClientUtility.SendMessage("传统视觉模板刷新");
-
-            }
-
-        }
-
-        private async void SaveTemplate1()
-        {
-            if (DataGridSelectedItem == null)
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先选择轮型！");
-                //EventMessage.SystemMessageDisplay("请先选择轮型!", MessageType.Warning);
-                return;
-            }
-            if (hv_ModelID == null || hv_ModelID.Length == 0)
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行制作模板！");
-
-                return;
-            }
-            MessageDialogResult dialogResult = await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"您选择的轮型是！：《 {DataGridSelectedItem.WheelType} 》，请确定轮型选择正确后，再点击确认！", MessageDialogStyle.AffirmativeAndNegative);
-
-            bool result = dialogResult == MessageDialogResult.Affirmative ? true : false; //WMessageBox.Show("保存确认", "您选择的轮型是：《" + DataGridSelectedItem.WheelType + "》，请确定轮型选择正确后，再点击确认！");
-            if (result)
-            {
-                try
-                {
-                    //hv_ModelID
-                    bool isUpdate = false;
-                    string tPath = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".tif"; //直接覆盖保存
-                    //Halcon中的路径                                                                                                                                                                                                        
-                    //string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".ncm";
-                    string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".shm";
-                    string existPath = aPath.Replace("/", @"\");
-                    string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".hobj";
-
-                    // HOperatorSet.WriteRegion(templateRegion, Path.Combine(dir, "template_region.hobj"));
-                    // HOperatorSet.WriteShapeModel(modelID, Path.Combine(dir, "template_shape.shm"));
-
-
-                    // 在后台线程执行耗时操作
-                    await Task.Run(async () =>
-                    {
-
-                        // HOperatorSet.CreateNccModel(TemplateImage, "auto", AngleStart, AngleExtent, 0.05, "use_polarity", out nccTemplate);
-                        // 异步保存模板文件
-                        await Task.WhenAll(
-                            Task.Run(() => HOperatorSet.WriteShapeModel(hv_ModelID, aPath)),
-                            Task.Run(() => HOperatorSet.WriteRegion(circleSector, bParh)),
-                            Task.Run(() => HOperatorSet.WriteImage(InPoseWheelImage, "tiff", 0, tPath)
-                            )
-                        );
-                    });
-
-                    // 在UI线程更新数据 (确保线程安全)
-                    if (isUpdate)
-                    {
-                        DataGridSelectedItem.UpdateTime = DateTime.Now;
-                    }
-                    else
-                    {
-                        DataGridSelectedItem.CreationTime = DateTime.Now.ToString("yy-MM-dd HH:mm");
-                        DataGridSelectedItem.UpdateTime = DateTime.Now;
-                    }
-                    DataGridSelectedItem.FullGary = float.Parse(FullGary);
-                    DataGridSelectedItem.TemplatePath = aPath;
-                    DataGridSelectedItem.TemplatePicturePath = tPath;
-                    DataGridSelectedItem.LastUsedTime = DateTime.Now;
-                    if (isUpdate) //更新
-                    {
-                        UpdateTemplate(DataGridSelectedItem.WheelType);
-                    }
-                    else
-                    {
-                        //新增
-                        AddTemplate(DataGridSelectedItem);
-                    }
-                    UpdataTemplateData(DataGridSelectedItem); // 假设这是数据层更新              
-                }
-                finally
-                {
-                    // 确保资源释放
-                    SafeHalconDispose(hv_ModelID);
-                    SafeHalconDispose(circleSector);
-                    SafeHalconDispose(SourceTemplateImage);
-                    SafeHalconDispose(InPoseWheelImage);
-                    SafeHalconDispose(TemplateImage);
-                    SafeHalconDispose(ho_Region_Removeds);
-
-                }
-
-                //EventMessage.MessageHelper.GetEvent<TemplateClearEvent>().Publish(string.Empty);
-                //EventMessage.SystemMessageDisplay("模板保存成功，型号是：" + DataGridSelectedItem.WheelType, MessageType.Success);
-                //EventMessage.MessageDisplay("模板保存成功，型号是：" + DataGridSelectedItem.WheelType, true, true);
-                pipeClientUtility.SendMessage("传统视觉模板刷新");
-
-            }
-
-        }
-        public void GetAllImageGray()
-        {
-
-            foreach (sys_bd_Templatedatamodel item in TemplateDatas)
-            {
-                string strPath = item.TemplatePicturePath;
-                HOperatorSet.ReadImage(out HObject Image, strPath);
-                HObject rgbImage = GrayTransRGB(Image);
-                HObject grayImage = RGBTransGray(rgbImage);
-                float fullGray = (float)GetIntensity(grayImage);
-                item.FullGary = fullGray;
-                Console.WriteLine($"{item.WheelType} 图片全局灰度值：{fullGray}");
-                SafeHalconDispose(Image);
-                SafeHalconDispose(rgbImage);
-                SafeHalconDispose(grayImage);
-            }
-
-           
-        }
-
-        /// <summary>
-        /// 删除模板
-        /// </summary>
-        private async void DelTemplate()
-        {
-            if (TemplateDatas.Count == 0)
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"无模板数据，请先录入模板！").ContinueWith(t => Console.WriteLine(t.Result));
-                return;
-            }
-            if (DataGridSelectedItem == null)
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先选择轮型！").ContinueWith(t => Console.WriteLine(t.Result));
-                return;
-            }
-            MessageDialogResult dialogResult = await this._dialogCoordinator.ShowMessageAsync(this, "删除确认", $"确定删除模板 {DataGridSelectedItem.WheelType} 吗？", MessageDialogStyle.AffirmativeAndNegative);
-
-            bool result = dialogResult == MessageDialogResult.Affirmative ? true : false; //WMessageBox.Show("删除确认", "确定删除模板：" + DataGridSelectedItem.WheelType + " 吗？");
-            if (result)
-            {
-
-
-
-                if (File.Exists(DataGridSelectedItem.TemplatePicturePath))
-                    File.Delete(DataGridSelectedItem.TemplatePicturePath);
-                //删除轮型模板
-                if (File.Exists(DataGridSelectedItem.TemplatePath))
-                    File.Delete(DataGridSelectedItem.TemplatePath);
-
-                //删除样式               
-                string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".hobj";
-                if (File.Exists(bParh))
-                    File.Delete(bParh);
-
-                int deleteIndex = DataGridSelectedItem.Index - 1; //被删除项
-                string wheelType = DataGridSelectedItem.WheelType;
-
-                DeleteModel(wheelType);
-                TemplateDatas.RemoveAt(deleteIndex);
-
-                OrganizeTemplateDatas();
-
-
-                //光标显示
-                if (TemplateDatas.Count - 1 >= deleteIndex)
-                {
-                    DataGridSelectedItem = TemplateDatas[deleteIndex];
-                    DataGridSelectedIndex = deleteIndex;
-                    //EventMessage.MessageHelper.GetEvent<TemplateDataEditEvent>().Publish(DataGridSelectedItem);
-                }
-                else if (TemplateDatas.Count - 1 < deleteIndex && deleteIndex != 0)
-                {
-                    DataGridSelectedItem = TemplateDatas[deleteIndex - 1];
-                    DataGridSelectedIndex = deleteIndex - 1;
-                    //EventMessage.MessageHelper.GetEvent<TemplateDataEditEvent>().Publish(DataGridSelectedItem);
-                }
-                else
-                {
-                    DataGridSelectedItem = null;
-                    DataGridSelectedIndex = -1;
-                }
-
-
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"模板删除成功，轮型是:{wheelType}").ContinueWith(t => Console.WriteLine(t.Result));
-                pipeClientUtility.SendMessage("传统视觉模板刷新");
-
-            }
-        }
-        /// <summary>
-        /// 参数设置
-        /// </summary>
-        private void ParameterSetting()
-        {
-            RecognitionResultDisplay = Visibility.Collapsed;
-            if (!IsParameterSettingDialog)
-            {
-                IsParameterSettingDialog = true;
-
-                var parameters = new DialogParameters
-                {
-                    //TemplateEndAngle TemplateStartAngle RemoveMixArea WindowMaxThreshold
-                   
-                    //{ "WheelMinThreshold", WheelMinThreshold },
-                    //{ "WheelMinRadius", WheelMinRadius },
-                    //{ "WindowMaxThreshold", WindowMaxThreshold },
-                    //{ "RemoveMixArea", RemoveMixArea },
-                    { "TemplateStartAngle", TemplateStartAngle },
-                    { "TemplateEndAngle", TemplateEndAngle },
-                 };
-                _dialogService.Show("ParameterSetting", parameters,
-                    new Action<IDialogResult>((IDialogResult result) =>
-                    {
-                        IDialogParameters paraResult = result.Parameters;
-                        IsParameterSettingDialog = false;
-                        if (paraResult.Count != 0)
-                        {
-
-                            //WheelMinThreshold = int.Parse(DialogParametersSet(paraResult, "WheelMinThreshold"));
-                            //WheelMinRadius = int.Parse(DialogParametersSet(paraResult, "WheelMinRadius"));
-                            //WindowMaxThreshold = int.Parse(DialogParametersSet(paraResult, "WindowMaxThreshold"));
-                            //RemoveMixArea = double.Parse(DialogParametersSet(paraResult, "RemoveMixArea"));
-                            //TemplateStartAngle = double.Parse(DialogParametersSet(paraResult, "TemplateStartAngle"));
-                            //TemplateEndAngle = double.Parse(DialogParametersSet(paraResult, "TemplateEndAngle"));
-                            //发送指令刷新参数
-                            //pipeClientUtility.SendMessage("参数刷新");
-                        }
-                    }));
-
-
-
-            }
-
-
-
-        }
-
-        /// <summary>
-        /// 参数设置时角度变化
-        /// </summary>
-        /// <param name="angle"></param>
-        /// <exception cref="NotImplementedException"></exception>
-        private void AngleChange(TemplateAngle angle)
-        {
-            TemplateStartAngle = angle.TemplateStartAngle;
-            TemplateEndAngle = angle.TemplateEndAngle;
-            //写入数据库
-            SqlAccess.SystemDatasUpdateable("TemplateStartAngle", TemplateStartAngle.ToString());
-            SqlAccess.SystemDatasUpdateable("TemplateEndAngle", TemplateEndAngle.ToString());
-        }
-
-        private string DialogParametersSet(IDialogParameters paraResult, string name)
-        {
-            string value = paraResult.GetValue<string>(name);
-            if (value != null)
-            {
-                SqlAccess.SystemDatasUpdateable(name, value);
-            }
-            return value;
-        }
-
-        /// <summary>
-        /// 显示模板 *
-        /// </summary>
-        private async void DisplayTemplates()
-        {
-            if (DataGridSelectedItem == null)
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先选择轮型！").ContinueWith(t => Console.WriteLine(t.Result));
-                //EventMessage.SystemMessageDisplay("请先选择轮型!", MessageType.Warning);
-                return;
-            }
-            string strPath = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".tif";
-
-
-            strPath = DataGridSelectedItem.TemplatePicturePath;
-            if (File.Exists(strPath))
-            {
-                HOperatorSet.ReadImage(out HObject Image, strPath);
-                TemplateImage = Image.Clone();
-                FullGary = DataGridSelectedItem.FullGary.ToString();
-                TemplateWindowDisplay(Image, null, null, null, null);
-                SafeHalconDispose(Image);
-            }
-            else
-            {
-                TemplateWindowDisplay(null, null, null, null, null);
-
-                //EventMessage.SystemMessageDisplay("轮型" + DataGridSelectedItem.WheelType + "无模板图像，请先录入模板!", MessageType.Warning);
-            }
-        }
-
-        /// <summary>
-        /// 显示模板
-        /// </summary>
-        private async void DisplayTemplates1()
-        {
-
-
-
-            if (DataGridSelectedItem == null)
-            {
-                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先选择轮型！").ContinueWith(t => Console.WriteLine(t.Result));
-                //EventMessage.SystemMessageDisplay("请先选择轮型!", MessageType.Warning);
-                return;
-            }
-            string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".shm";
-            string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".hobj";
-            string strPath = DataGridSelectedItem.TemplatePicturePath;
-            if (File.Exists(strPath))
-            {
-                HOperatorSet.ReadImage(out HObject Image, strPath);
-                TemplateImage = Image.Clone();
-
-                HObject ho_TransContours = new HObject();
-                //读取模板 与 模板区域
-                if (File.Exists(aPath) && File.Exists(bParh))
-                {
-                    HTuple hv_ModelRegionArea = new HTuple();
-                    HTuple hv_RefRow = new HTuple(), hv_RefColumn = new HTuple();
-                    HTuple hv_HomMat2D = new HTuple();
-
-                    HObject ho_ModelContours;
-
-                    HObject ho_circleSector;
-                    HTuple hv_ModelID;
-
-                    HOperatorSet.ReadRegion(out ho_circleSector, bParh);
-                    HOperatorSet.ReadShapeModel(aPath, out hv_ModelID);
-
-                    HOperatorSet.GetShapeModelContours(out ho_ModelContours, hv_ModelID, 1);
-                    //显示轮毂线条
-                    HOperatorSet.AreaCenter(ho_circleSector, out hv_ModelRegionArea, out hv_RefRow, out hv_RefColumn);
-                    HOperatorSet.VectorAngleToRigid(0, 0, 0, hv_RefRow, hv_RefColumn, 0, out hv_HomMat2D);
-                    HOperatorSet.AffineTransContourXld(ho_ModelContours, out ho_TransContours, hv_HomMat2D);
-                    SafeHalconDispose(hv_RefRow);
-                    SafeHalconDispose(hv_RefColumn);
-                    SafeHalconDispose(hv_HomMat2D);
-                    SafeHalconDispose(ho_ModelContours);
-
-                    SafeHalconDispose(ho_circleSector);
-                    SafeHalconDispose(hv_ModelID);
-                }
-
-
-                //TemplateWindowDisplay(InPoseWheelImage, null, null, ho_TransContours, null);
-
-                //InnerCircleGary = DataGridSelectedItem.InnerCircleGary.ToString();
-                TemplateWindowDisplay(Image, null, null, ho_TransContours, null);
-                SafeHalconDispose(Image);
-                SafeHalconDispose(ho_TransContours);
-
-
-            }
-            else
-            {
-                TemplateWindowDisplay(null, null, null, null, null);
-
-                //EventMessage.SystemMessageDisplay("轮型" + DataGridSelectedItem.WheelType + "无模板图像，请先录入模板!", MessageType.Warning);
-            }
-        }
-
-
-
-
-        /// <summary>
-        /// 匹配结果
-        /// </summary>
-        private void MatchResult()
-        {
-
-            if (!IsMatchResultDialog)
-            {
-                IsMatchResultDialog = true;
-                _dialogService.Show("MatchResult", dialogResult =>
-                {
-                    IsMatchResultDialog = false;
-                });
-            }
-
-        }
         /// <summary>
         /// 识别测试
         /// </summary>
         private async void RecognitionTest()
         {
 
-            
+
 
             if (templateDataList.Count == 0)
             {
@@ -1747,7 +1107,7 @@ namespace TemplateSystem.ViewModels
             //pResult.Dispose();
             recognitionResult.Dispose();
             list.Clear();
-             
+
             recognitionResult = null;
 
             TimeSpan consumeTime = endTime.Subtract(startTime);
@@ -1757,6 +1117,481 @@ namespace TemplateSystem.ViewModels
 
 
         }
+
+        /// <summary>
+        /// 读取图像
+        /// </summary>
+        private void ReadImage()
+        {
+            RecognitionResultDisplay = Visibility.Collapsed;
+            var path = HistoricalImagesPath + @"\" + DateTime.Now.Month.ToString() + @"月\" + DateTime.Now.Day.ToString() + @"日";
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                InitialDirectory = HistoricalImagesPath,
+                Title = "请选择要制作模板的图片，当日图像存储路径为：" + path,
+                Filter = "TIF文件|*.tif|JPEG文件|*.jpg|BMP文件|*.bmp|PNG文件|*.png|所有文件(*.*)|*.*",//文件筛选器设定
+                FilterIndex = 1,
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    var File_Name = openFileDialog.FileName;
+                    SafeHalconDispose(SourceTemplateImage);
+                    HOperatorSet.ReadImage(out HObject image, File_Name);
+                    SourceTemplateImage = image;
+
+                    TemplateWindowDisplay(SourceTemplateImage, null, null, null, null);
+                }
+                catch (Exception ex)
+                {
+                    //EventMessage.SystemMessageDisplay(ex.Message, MessageType.Error);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 手动定位轮毂
+        /// </summary>
+        public async void ManuslPositionHub(double row, double col, double radius)
+        {
+            if (SourceTemplateImage == null || !SourceTemplateImage.IsInitialized())
+            {
+                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行读取图片！");
+                //EventMessage.SystemMessageDisplay("请先执行读取图片或采集图像!", MessageType.Warning);
+                return;
+            }
+            try
+            {
+
+                PositioningWheelResultModel pResult = ManuslPositioningWheel(SourceTemplateImage, row, col, radius);
+
+
+
+                InPoseWheelImage = CloneImageSafely(pResult.WheelImage);
+                circleRow = row;
+                circleCol = col;
+                circleRadius = radius;
+                TemplateWindowDisplay(SourceTemplateImage, null, pResult.WheelContour, null, null);
+                pResult.WheelContour.Dispose();
+                FullGary = pResult.FullFigureGary.ToString();
+                pResult.Dispose();
+                pResult = null;
+
+            }
+            catch (Exception ex)
+            {
+                //EventMessage.SystemMessageDisplay(ex.Message, MessageType.Error);
+                return;
+            }
+        }
+
+
+        /// <summary>
+        /// 制作模板
+        /// </summary>
+        private async void PreviewTemplate1()
+        {
+
+
+            if (InPoseWheelImage == null || !InPoseWheelImage.IsInitialized())
+            {
+                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行定位轮毂！").ContinueWith(t => Console.WriteLine(t.Result));
+              
+                return;
+            }
+
+            //扇形区域
+            HOperatorSet.GenCircleSector(out circleSector, circleRow, circleCol, circleRadius, TemplateStartAngle, TemplateEndAngle);
+            //剪切制作模板的区域
+            HOperatorSet.ReduceDomain(InPoseWheelImage, circleSector, out HObject reduced);
+
+            HObject ho_ModelContours, ho_TransContours;
+
+            HTuple hv_ModelRegionArea = new HTuple();
+            HTuple hv_RefRow = new HTuple(), hv_RefColumn = new HTuple();
+            HTuple hv_HomMat2D = new HTuple();
+
+
+            HOperatorSet.CreateGenericShapeModel(out hv_ModelID);
+            HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "metric", "use_polarity");
+            if (IsSet && ContrastLow != 1 && ContrastHigh != 1 && MinSize != 1)
+            {
+                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "contrast_high", ContrastHigh);
+                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "contrast_low", ContrastLow);
+                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "min_size", MinSize);
+            }
+
+
+            HOperatorSet.TrainGenericShapeModel(reduced, hv_ModelID)
+                ;
+
+
+            //显示轮毂线条
+            HOperatorSet.GetShapeModelContours(out ho_ModelContours, hv_ModelID, 1);
+            HOperatorSet.AreaCenter(circleSector, out hv_ModelRegionArea, out hv_RefRow, out hv_RefColumn);
+            HOperatorSet.VectorAngleToRigid(0, 0, 0, hv_RefRow, hv_RefColumn, 0, out hv_HomMat2D);
+            HOperatorSet.AffineTransContourXld(ho_ModelContours, out ho_TransContours, hv_HomMat2D);
+            TemplateWindowDisplay(InPoseWheelImage, null, null, ho_TransContours, null);
+
+            //数据参数反馈
+            HOperatorSet.GetGenericShapeModelParam(hv_ModelID, "contrast_high", out HTuple hv_contrast_high);
+            HOperatorSet.GetGenericShapeModelParam(hv_ModelID, "contrast_low", out HTuple hv_contrast_low);
+            HOperatorSet.GetGenericShapeModelParam(hv_ModelID, "min_size", out HTuple hv_min_size);
+            _eventAggregator.GetEvent<ShapeModelParamEvent>().Publish(new ShapeModelParam()
+            {
+                ContrastHigh = hv_contrast_high.I,
+                ContrastLow = hv_contrast_low.I,
+                MinSize = hv_min_size.I
+            });
+            this.ContrastHigh = hv_contrast_high.I;
+            this.ContrastLow = hv_contrast_low.I;
+            this.MinSize = hv_min_size.I;
+
+
+            SafeDisposeHObject(ref ho_ModelContours);
+            SafeDisposeHObject(ref ho_TransContours);
+
+            SafeDisposeHTuple(ref hv_ModelRegionArea);
+            SafeDisposeHTuple(ref hv_RefRow);
+            SafeDisposeHTuple(ref hv_RefColumn);
+            SafeDisposeHTuple(ref hv_HomMat2D);
+
+            SafeDisposeHTuple(ref hv_contrast_high);
+            SafeDisposeHTuple(ref hv_contrast_low);
+            SafeDisposeHTuple(ref hv_min_size);
+
+
+        }
+
+        /// <summary>
+        /// 保存
+        /// </summary>
+        private async void SaveTemplate1()
+        {
+            if (DataGridSelectedItem == null)
+            {
+                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先选择轮型！");
+                //EventMessage.SystemMessageDisplay("请先选择轮型!", MessageType.Warning);
+                return;
+            }
+            if (hv_ModelID == null || hv_ModelID.Length == 0)
+            {
+                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行制作模板！");
+
+                return;
+            }
+            MessageDialogResult dialogResult = await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"您选择的轮型是！：《 {DataGridSelectedItem.WheelType} 》，请确定轮型选择正确后，再点击确认！", MessageDialogStyle.AffirmativeAndNegative);
+
+            bool result = dialogResult == MessageDialogResult.Affirmative ? true : false; //WMessageBox.Show("保存确认", "您选择的轮型是：《" + DataGridSelectedItem.WheelType + "》，请确定轮型选择正确后，再点击确认！");
+            if (result)
+            {
+                try
+                {
+                    //hv_ModelID
+                    bool isUpdate = false;
+                    string tPath = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".tif"; //直接覆盖保存
+                    //Halcon中的路径                                                                                                                                                                                                        
+                    //string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".ncm";
+                    string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".shm";
+                    string existPath = aPath.Replace("/", @"\");
+                    string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".hobj";
+                    if (File.Exists(existPath))
+                    {
+                        isUpdate = true;
+                    }
+
+
+                    // 在后台线程执行耗时操作
+                    await Task.Run(async () =>
+                    {
+
+                        // 异步保存模板文件
+                        await Task.WhenAll(
+                            Task.Run(() => HOperatorSet.WriteShapeModel(hv_ModelID, aPath)),
+                            Task.Run(() => HOperatorSet.WriteRegion(circleSector, bParh)),
+                            Task.Run(() => HOperatorSet.WriteImage(InPoseWheelImage, "tiff", 0, tPath)
+                            )
+                        );
+                    });
+
+                    // 在UI线程更新数据 (确保线程安全)
+                    if (isUpdate)
+                    {
+                        DataGridSelectedItem.UpdateTime = DateTime.Now;
+                    }
+                    else
+                    {
+                        DataGridSelectedItem.CreationTime = DateTime.Now.ToString("yy-MM-dd HH:mm");
+                        DataGridSelectedItem.UpdateTime = DateTime.Now;
+                    }
+                    DataGridSelectedItem.FullGary = float.Parse(FullGary);
+                    DataGridSelectedItem.TemplatePath = aPath;
+                    DataGridSelectedItem.TemplatePicturePath = tPath;
+                    DataGridSelectedItem.LastUsedTime = DateTime.Now;
+                    if (isUpdate) //更新
+                    {
+                        UpdateTemplate(DataGridSelectedItem.WheelType);
+                    }
+                    else
+                    {
+                        //新增
+                        AddTemplate(DataGridSelectedItem);
+                    }
+                    UpdataTemplateData(DataGridSelectedItem); // 数据层更新
+                    //恢复参数默认值
+                    _eventAggregator.GetEvent<SetShowEvent>().Publish(false);
+                    this.IsSet = false;
+                    this.ContrastHigh = 1;
+                    this.ContrastLow = 1;
+                    this.MinSize = 1;
+                    _eventAggregator.GetEvent<ShapeModelParamEvent>().Publish(new ShapeModelParam()
+                    {
+                        ContrastHigh = this.ContrastHigh,
+                        ContrastLow = this.ContrastLow,
+                        MinSize = this.MinSize
+                    });
+                }
+                finally
+                {
+                    // 确保资源释放
+                    SafeHalconDispose(hv_ModelID);
+                    SafeHalconDispose(circleSector);
+                    SafeHalconDispose(SourceTemplateImage);
+                    SafeHalconDispose(InPoseWheelImage);
+                    SafeHalconDispose(TemplateImage);
+                    SafeHalconDispose(ho_Region_Removeds);
+
+                }
+
+                //EventMessage.MessageHelper.GetEvent<TemplateClearEvent>().Publish(string.Empty);
+                //EventMessage.SystemMessageDisplay("模板保存成功，型号是：" + DataGridSelectedItem.WheelType, MessageType.Success);
+                //EventMessage.MessageDisplay("模板保存成功，型号是：" + DataGridSelectedItem.WheelType, true, true);
+                pipeClientUtility.SendMessage("传统视觉模板刷新");
+
+            }
+
+        }
+
+        /// <summary>
+        /// 显示模板
+        /// </summary>
+        private async void DisplayTemplates1()
+        {
+
+
+
+            if (DataGridSelectedItem == null)
+            {
+                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先选择轮型！").ContinueWith(t => Console.WriteLine(t.Result));
+                //EventMessage.SystemMessageDisplay("请先选择轮型!", MessageType.Warning);
+                return;
+            }
+            string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".shm";
+            string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".hobj";
+            string strPath = DataGridSelectedItem.TemplatePicturePath;
+            if (File.Exists(strPath))
+            {
+                HOperatorSet.ReadImage(out HObject Image, strPath);
+                TemplateImage = Image.Clone();
+
+                HObject ho_TransContours = new HObject();
+                //读取模板 与 模板区域
+                if (File.Exists(aPath) && File.Exists(bParh))
+                {
+                    HTuple hv_ModelRegionArea = new HTuple();
+                    HTuple hv_RefRow = new HTuple(), hv_RefColumn = new HTuple();
+                    HTuple hv_HomMat2D = new HTuple();
+
+                    HObject ho_ModelContours;
+
+                    HObject ho_circleSector;
+                    HTuple hv_ModelID;
+
+                    HOperatorSet.ReadRegion(out ho_circleSector, bParh);
+                    HOperatorSet.ReadShapeModel(aPath, out hv_ModelID);
+
+                    HOperatorSet.GetShapeModelContours(out ho_ModelContours, hv_ModelID, 1);
+                    //显示轮毂线条
+                    HOperatorSet.AreaCenter(ho_circleSector, out hv_ModelRegionArea, out hv_RefRow, out hv_RefColumn);
+                    HOperatorSet.VectorAngleToRigid(0, 0, 0, hv_RefRow, hv_RefColumn, 0, out hv_HomMat2D);
+                    HOperatorSet.AffineTransContourXld(ho_ModelContours, out ho_TransContours, hv_HomMat2D);
+                    SafeHalconDispose(hv_RefRow);
+                    SafeHalconDispose(hv_RefColumn);
+                    SafeHalconDispose(hv_HomMat2D);
+                    SafeHalconDispose(ho_ModelContours);
+
+                    SafeHalconDispose(ho_circleSector);
+                    SafeHalconDispose(hv_ModelID);
+                }
+
+
+                //TemplateWindowDisplay(InPoseWheelImage, null, null, ho_TransContours, null);
+
+                //InnerCircleGary = DataGridSelectedItem.InnerCircleGary.ToString();
+                TemplateWindowDisplay(Image, null, null, ho_TransContours, null);
+                SafeHalconDispose(Image);
+                SafeHalconDispose(ho_TransContours);
+
+
+            }
+            else
+            {
+                TemplateWindowDisplay(null, null, null, null, null);
+
+                //EventMessage.SystemMessageDisplay("轮型" + DataGridSelectedItem.WheelType + "无模板图像，请先录入模板!", MessageType.Warning);
+            }
+        }
+
+        /// <summary>
+        /// 删除模板
+        /// </summary>
+        private async void DelTemplate()
+        {
+            if (TemplateDatas.Count == 0)
+            {
+                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"无模板数据，请先录入模板！").ContinueWith(t => Console.WriteLine(t.Result));
+                return;
+            }
+            if (DataGridSelectedItem == null)
+            {
+                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先选择轮型！").ContinueWith(t => Console.WriteLine(t.Result));
+                return;
+            }
+            MessageDialogResult dialogResult = await this._dialogCoordinator.ShowMessageAsync(this, "删除确认", $"确定删除模板 {DataGridSelectedItem.WheelType} 吗？", MessageDialogStyle.AffirmativeAndNegative);
+
+            bool result = dialogResult == MessageDialogResult.Affirmative ? true : false; //WMessageBox.Show("删除确认", "确定删除模板：" + DataGridSelectedItem.WheelType + " 吗？");
+            if (result)
+            {
+
+
+
+                if (File.Exists(DataGridSelectedItem.TemplatePicturePath))
+                    File.Delete(DataGridSelectedItem.TemplatePicturePath);
+                //删除轮型模板
+                if (File.Exists(DataGridSelectedItem.TemplatePath))
+                    File.Delete(DataGridSelectedItem.TemplatePath);
+
+                //删除样式               
+                string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".hobj";
+                if (File.Exists(bParh))
+                    File.Delete(bParh);
+
+                int deleteIndex = DataGridSelectedItem.Index - 1; //被删除项
+                string wheelType = DataGridSelectedItem.WheelType;
+
+                DeleteModel(wheelType);
+                TemplateDatas.RemoveAt(deleteIndex);
+
+                OrganizeTemplateDatas();
+
+
+                //光标显示
+                if (TemplateDatas.Count - 1 >= deleteIndex)
+                {
+                    DataGridSelectedItem = TemplateDatas[deleteIndex];
+                    DataGridSelectedIndex = deleteIndex;
+                    //EventMessage.MessageHelper.GetEvent<TemplateDataEditEvent>().Publish(DataGridSelectedItem);
+                }
+                else if (TemplateDatas.Count - 1 < deleteIndex && deleteIndex != 0)
+                {
+                    DataGridSelectedItem = TemplateDatas[deleteIndex - 1];
+                    DataGridSelectedIndex = deleteIndex - 1;
+                    //EventMessage.MessageHelper.GetEvent<TemplateDataEditEvent>().Publish(DataGridSelectedItem);
+                }
+                else
+                {
+                    DataGridSelectedItem = null;
+                    DataGridSelectedIndex = -1;
+                }
+
+
+                await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"模板删除成功，轮型是:{wheelType}").ContinueWith(t => Console.WriteLine(t.Result));
+                pipeClientUtility.SendMessage("传统视觉模板刷新");
+
+            }
+        }
+
+
+        /// <summary>
+        /// 匹配结果
+        /// </summary>
+        private void MatchResult()
+        {
+
+            if (!IsMatchResultDialog)
+            {
+                IsMatchResultDialog = true;
+                _dialogService.Show("MatchResult", dialogResult =>
+                {
+                    IsMatchResultDialog = false;
+                });
+            }
+
+        }
+
+
+
+
+
+
+       
+        public void GetAllImageGray()
+        {
+
+            foreach (sys_bd_Templatedatamodel item in TemplateDatas)
+            {
+                string strPath = item.TemplatePicturePath;
+                HOperatorSet.ReadImage(out HObject Image, strPath);
+                HObject rgbImage = GrayTransRGB(Image);
+                HObject grayImage = RGBTransGray(rgbImage);
+                float fullGray = (float)GetIntensity(grayImage);
+                item.FullGary = fullGray;
+                Console.WriteLine($"{item.WheelType} 图片全局灰度值：{fullGray}");
+                SafeHalconDispose(Image);
+                SafeHalconDispose(rgbImage);
+                SafeHalconDispose(grayImage);
+            }
+
+           
+        }
+
+        
+        /// <summary>
+        /// 参数修改后更新参数与保存
+        /// </summary>
+        /// <param name="angle"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void AngleChange(ShapeModelParam angle)
+        {
+            this.IsSet = angle.IsSet;
+            this.ContrastLow = angle.ContrastLow;
+            this.ContrastHigh = angle.ContrastHigh;
+            this.MinSize = angle.MinSize;
+
+            TemplateStartAngle = angle.TemplateStartAngle;
+            TemplateEndAngle = angle.TemplateEndAngle;
+
+            //写入数据库
+            SqlAccess.SystemDatasUpdateable("TemplateStartAngle", TemplateStartAngle.ToString());
+            SqlAccess.SystemDatasUpdateable("TemplateEndAngle", TemplateEndAngle.ToString());
+        }
+
+        private string DialogParametersSet(IDialogParameters paraResult, string name)
+        {
+            string value = paraResult.GetValue<string>(name);
+            if (value != null)
+            {
+                SqlAccess.SystemDatasUpdateable(name, value);
+            }
+            return value;
+        }
+
+       
+       
+
+
+
 
 
         /// <summary>

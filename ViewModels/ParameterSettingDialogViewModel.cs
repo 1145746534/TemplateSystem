@@ -8,12 +8,17 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using TemplateSystem.Models;
 using TemplateSystem.Util;
 
 namespace TemplateSystem.ViewModels
 {
-    internal class ParameterSettingDialogViewModel : BindableBase, IDialogAware
+    internal class SetShowEvent : PubSubEvent<bool> { }
+    internal class ShapeModelParamEvent : PubSubEvent<ShapeModelParam> { }
+
+
+    internal class ParameterSettingDialogViewModel : BindableBase, IDialogAware, IDisposable
     {
         private bool _disposed = false;
 
@@ -22,44 +27,9 @@ namespace TemplateSystem.ViewModels
         public event Action<IDialogResult> RequestClose;
         private readonly IEventAggregator _eventAggregator;
 
-        private int _windowMaxThreshold;
-        /// <summary>
-        /// 制作模板时模板剔除部分最大阈值
-        /// </summary>
-        public int WindowMaxThreshold
-        {
-            get { return _windowMaxThreshold; }
-            set { SetProperty(ref _windowMaxThreshold, value); }
-        }
+        private SubscriptionToken _subscriptionToken1;
+        private SubscriptionToken _subscriptionToken2;
 
-        private double _removeMixArea;
-        /// <summary>
-        /// 制作模板时模板剔除部分的最小面积
-        /// </summary>
-        public double RemoveMixArea
-        {
-            get { return _removeMixArea; }
-            set { SetProperty(ref _removeMixArea, value); }
-        }
-        //TemplateEndAngle TemplateStartAngle 
-        private int _wheelMinThreshold;
-        /// <summary>
-        /// 定位轮毂最小阈值
-        /// </summary>
-        public int WheelMinThreshold
-        {
-            get { return _wheelMinThreshold; }
-            set { SetProperty(ref _wheelMinThreshold, value); }
-        }
-        private int _wheelMinRadius;
-        /// <summary>
-        /// 定位轮毂最小半径
-        /// </summary>
-        public int WheelMinRadius
-        {
-            get { return _wheelMinRadius; }
-            set { SetProperty(ref _wheelMinRadius, value); }
-        }
 
         private double _templateStartAngle;
         /// <summary>
@@ -80,6 +50,99 @@ namespace TemplateSystem.ViewModels
             set { SetProperty(ref _templateEndAngle, value); }
         }
 
+        private bool _isSet;
+        /// <summary>
+        /// 是否启用参数
+        /// </summary>
+        public bool IsSet
+        {
+            get { return _isSet; }
+            set
+            {
+                SetProperty(ref _isSet, value);
+                SetVisibility(value);
+            }
+        }
+
+        private int _contrastLow;
+        /// <summary>
+        /// 对比度（低）
+        /// </summary>
+        public int ContrastLow
+        {
+            get { return _contrastLow; }
+            set {
+                if (value>= ContrastHigh)
+                {
+                    ContrastHigh = value + 1;
+                }
+                SetProperty(ref _contrastLow, value); 
+            }
+        }
+
+        private int _contrastHigh;
+        /// <summary>
+        /// 对比度（高）
+        /// </summary>
+        public int ContrastHigh
+        {
+            get { return _contrastHigh; }
+            set {
+                if (value <= ContrastLow)
+                {
+                    ContrastLow = value;
+                }
+                SetProperty(ref _contrastHigh, value); 
+            }
+        }
+        private int _minSize;
+        /// <summary>
+        /// 最小组件尺寸
+        /// </summary>
+        public int MinSize
+        {
+            get { return _minSize; }
+            set { SetProperty(ref _minSize, value); }
+        }
+
+
+        private Visibility _paramShow;
+        /// <summary>
+        /// 显示
+        /// </summary>
+        public Visibility ParamShow
+        {
+            get { return _paramShow; }
+            set { SetProperty(ref _paramShow, value); }
+        }
+
+
+
+        public ParameterSettingDialogViewModel(IEventAggregator eventAggregator)
+        {
+            OkCommand = new DelegateCommand(Ok);
+            CancelCommand = new DelegateCommand(Cancel);
+            _eventAggregator = eventAggregator;
+            ParamShow = Visibility.Hidden;
+
+            // 订阅事件
+            _subscriptionToken1 = _eventAggregator
+                .GetEvent<SetShowEvent>()
+                .Subscribe(SetParamShow,
+                            ThreadOption.UIThread, // 确保在UI线程执行
+                            keepSubscriberReferenceAlive: true);
+            _subscriptionToken2 = _eventAggregator
+                .GetEvent<ShapeModelParamEvent>()
+                .Subscribe(ModelParamChange,
+                            ThreadOption.UIThread, // 确保在UI线程执行
+                            keepSubscriberReferenceAlive: true);
+
+        }
+
+
+
+
+
 
 
         /// <summary>
@@ -91,12 +154,33 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         public DelegateCommand CancelCommand { get; set; }
 
-        public ParameterSettingDialogViewModel(IEventAggregator eventAggregator)
+        private void SetParamShow(bool obj)
         {
-            OkCommand = new DelegateCommand(Ok);
-            CancelCommand = new DelegateCommand(Cancel);
-            _eventAggregator = eventAggregator;
+            IsSet = obj;
+           
         }
+        private void SetVisibility(bool isShow)
+        {
+            if (isShow)
+            {
+                ParamShow = Visibility.Visible;
+            }
+            else
+            {
+                ParamShow = Visibility.Hidden;
+            }
+        }
+        /// <summary>
+        /// 模板出生成后反馈的参数
+        /// </summary>
+        /// <param name="param"></param>
+        private void ModelParamChange(ShapeModelParam param)
+        {
+            this.ContrastLow = param.ContrastLow;
+            this.ContrastHigh = param.ContrastHigh;
+            this.MinSize = param.MinSize;
+        }
+
 
         private void Cancel()
         {
@@ -105,9 +189,17 @@ namespace TemplateSystem.ViewModels
 
         private void Ok()
         {
-            TemplateAngle angle = new TemplateAngle();
+            ShapeModelParam angle = new ShapeModelParam();
             angle.TemplateStartAngle = DegreesToRadians(TemplateStartAngle);
             angle.TemplateEndAngle = DegreesToRadians(TemplateEndAngle);
+            angle.IsSet = IsSet;
+            if (IsSet && ContrastLow != 1 && ContrastHigh != 1 && MinSize != 1)
+            {
+                angle.ContrastLow = ContrastLow;
+                angle.ContrastHigh = ContrastHigh;
+                angle.MinSize = MinSize;
+            }
+
 
             _eventAggregator.GetEvent<AngleChangeEvent>().Publish(angle);
 
@@ -138,14 +230,7 @@ namespace TemplateSystem.ViewModels
 
         public void OnDialogOpened(IDialogParameters parameters)
         {
-            if (parameters.ContainsKey("WheelMinThreshold"))
-                WheelMinThreshold = parameters.GetValue<int>("WheelMinThreshold");
-            if (parameters.ContainsKey("WheelMinRadius"))
-                WheelMinRadius = parameters.GetValue<int>("WheelMinRadius");
-            if (parameters.ContainsKey("WindowMaxThreshold"))
-                WindowMaxThreshold = parameters.GetValue<int>("WindowMaxThreshold");
-            if (parameters.ContainsKey("RemoveMixArea"))
-                RemoveMixArea = parameters.GetValue<double>("RemoveMixArea");
+
             if (parameters.ContainsKey("TemplateStartAngle"))
             {
                 double radians = parameters.GetValue<double>("TemplateStartAngle");
@@ -157,7 +242,18 @@ namespace TemplateSystem.ViewModels
                 double radians = parameters.GetValue<double>("TemplateEndAngle");
                 TemplateEndAngle = RadiansToDegrees(radians);
             }
-
+            if (parameters.ContainsKey("ContrastLow"))
+            {
+                ContrastLow = parameters.GetValue<int>("ContrastLow");
+            }  
+            if (parameters.ContainsKey("ContrastHigh"))
+            {
+                ContrastHigh = parameters.GetValue<int>("ContrastHigh");
+            }  
+            if (parameters.ContainsKey("MinSize"))
+            {
+                MinSize = parameters.GetValue<int>("MinSize");
+            }
 
 
         }
@@ -182,22 +278,12 @@ namespace TemplateSystem.ViewModels
             return degrees * (Math.PI / 180.0);
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    // Unsubscribe from events and release managed resources
-                }
 
-                // Free unmanaged resources (if any) and set large fields to null
-                _disposed = true;
-            }
-        }
         public void Dispose()
         {
-            Dispose(true);
+            // 取消订阅，防止内存泄漏
+            _subscriptionToken1?.Dispose();
+            _subscriptionToken2?.Dispose();
             GC.SuppressFinalize(this);
         }
     }

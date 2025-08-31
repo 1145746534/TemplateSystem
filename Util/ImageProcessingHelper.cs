@@ -112,6 +112,21 @@ namespace TemplateSystem.Util
             }
         }
 
+
+
+        /// <summary>
+        /// 处理 HTuple 的释放
+        /// </summary>
+        /// <param name="tuple"></param>
+        public static void SafeDisposeHTuple(ref HTuple tuple)
+        {
+            if (tuple != null)
+            {
+                tuple.Dispose();
+                tuple = null;
+            }
+        }
+
         // 安全克隆方法
         public static HObject CloneImageSafely(HObject source)
         {

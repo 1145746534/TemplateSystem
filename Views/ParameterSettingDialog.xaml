@@ -7,7 +7,7 @@
              xmlns:local="clr-namespace:TemplateSystem.Views"
              mc:Ignorable="d" FontFamily="Microsoft YaHei" FontSize="16"
              mah:DialogParticipation.Register="{Binding}"
-             Height="190" Width="300">
+             Height="290" Width="300">
     <Border>
         <Border.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -17,14 +17,18 @@
         </Border.Background>
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="4*"/>
+                <RowDefinition Height="8*"/>
                 <RowDefinition Height="3*"/>
             </Grid.RowDefinitions>
-            <Grid Margin="10,5,10,0" Grid.Row="0">
+            <Grid Margin="5,5,5,0" Grid.Row="0">
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition/>
-                    
+                    <RowDefinition Height="30"/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
@@ -32,15 +36,37 @@
                 </Grid.ColumnDefinitions>
                 <Label Grid.Row="0" Grid.Column="0" Content="模板起始角度：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
                 <!--<TextBox Grid.Row="0" Grid.Column="1" Text="{Binding TemplateStartAngle}"  FontSize="20" Margin="5"/>-->
-                <mah:NumericUpDown  Grid.Row="0" Grid.Column="1"  FontSize="20" Margin="5"
+                <mah:NumericUpDown  Grid.Row="0" Grid.Column="1"  Margin="5"
                         Value="{Binding TemplateStartAngle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         Minimum="1" Maximum="360" Interval="5" StringFormat="F2"  mah:TextBoxHelper.ClearTextButton="False"/>
-                
+
                 <Label Grid.Row="1" Grid.Column="0" Content="模板终止角度：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
                 <!--<TextBox Grid.Row="1" Grid.Column="1" Text="{Binding TemplateEndAngle}"  FontSize="20" Margin="5"/>-->
-                <mah:NumericUpDown  Grid.Row="1" Grid.Column="1"  FontSize="20" Margin="5"
+                <mah:NumericUpDown  Grid.Row="1" Grid.Column="1"  Margin="5"
                         Value="{Binding TemplateEndAngle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         Minimum="1" Maximum="360" Interval="5" StringFormat="F2"  mah:TextBoxHelper.ClearTextButton="False"/>
+
+                <StackPanel Grid.Row="2" Grid.Column="0"  Grid.ColumnSpan="2" Orientation="Horizontal" >
+                    <Label Content="模板参数编辑：" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+
+                    <mah:ToggleSwitch   IsOn="{Binding IsSet}" Margin="0,0,0,0" />
+                </StackPanel>
+
+
+
+
+                <Label Grid.Row="3" Grid.Column="0" Visibility="{Binding ParamShow}" Content="对比度（低）：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                <mah:NumericUpDown  Grid.Row="3" Grid.Column="1"  Margin="5"  Visibility="{Binding ParamShow}"
+                        Value="{Binding ContrastLow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Minimum="1" Maximum="254" Interval="1" StringFormat="F0"  mah:TextBoxHelper.ClearTextButton="False"/>
+                <Label Grid.Row="4" Grid.Column="0" Visibility="{Binding ParamShow}" Content="对比度（高）：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                <mah:NumericUpDown  Grid.Row="4" Grid.Column="1"  Margin="5" Visibility="{Binding ParamShow}"
+                        Value="{Binding ContrastHigh, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Minimum="1" Maximum="254" Interval="1" StringFormat="F0"  mah:TextBoxHelper.ClearTextButton="False"/>
+                <Label Grid.Row="5" Grid.Column="0" Visibility="{Binding ParamShow}" Content="最小组件尺寸：" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                <mah:NumericUpDown  Grid.Row="5" Grid.Column="1"  Margin="5" Visibility="{Binding ParamShow}"
+                        Value="{Binding MinSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Minimum="1" Maximum="499" Interval="1" StringFormat="F0"  mah:TextBoxHelper.ClearTextButton="False"/>
 
             </Grid>
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,5,40,10">
