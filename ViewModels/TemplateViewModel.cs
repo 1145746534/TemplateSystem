@@ -567,9 +567,9 @@ namespace TemplateSystem.ViewModels
                 if (columnIndex == 4)
                 {
                     DataGridSelectedItem = TemplateDatas[DataGridSelectedIndex];
-                    var sDB = new SqlAccess().SystemDataAccess;
-                    sDB.Updateable(DataGridSelectedItem).ExecuteCommand();
-                    sDB.Close(); sDB.Dispose();
+                    //var sDB = new SqlAccess().SystemDataAccess;
+                    //sDB.Updateable(DataGridSelectedItem).ExecuteCommand();
+                    //sDB.Close(); sDB.Dispose();
                 }
             }
         }
@@ -788,11 +788,11 @@ namespace TemplateSystem.ViewModels
             else if (obj == "保存") SaveTemplate1();
             else if (obj == "显示模板") DisplayTemplates1();
             else if (obj == "删除模板") DelTemplate();
-          
-           
-           
+
+
+
             else if (obj == "匹配结果") MatchResult();
-            
+
             //else if (obj == "模板检查") TemplateExamine();
             else return;
         }
@@ -855,7 +855,7 @@ namespace TemplateSystem.ViewModels
                 _dialogService.Show("ParameterSetting", parameters,
                     new Action<IDialogResult>((IDialogResult result) =>
                     {
-                        
+
                         IDialogParameters paraResult = result.Parameters;
                         IsParameterSettingDialog = false;
                         this.IsSet = false;
@@ -1062,7 +1062,18 @@ namespace TemplateSystem.ViewModels
             HObject templateContour = null;
             if (recognitionResult.RecognitionWheelType != "NG")
             {
-                //templateContour = GetAffineTemplateContour(GetHTupleByName(recognitionResult.RecognitionWheelType), recognitionResult.CenterRow, recognitionResult.CenterColumn, recognitionResult.Radian);
+                //定位到识别的轮型
+                int index = TemplateDatas
+                .Select((item, idx) => new { Item = item, Index = idx })
+                .FirstOrDefault(x => x.Item.WheelType == recognitionResult.RecognitionWheelType)?.Index ?? -1;
+                if (index != -1)
+                {
+                    DataGridSelectedItem = TemplateDatas[index];
+                    DataGridSelectedIndex = index;
+                    _eventAggregator.GetEvent<ScrollToIndexEvent>().Publish(index);
+                }
+               
+
                 templateContour = recognitionResult.RecognitionContour.Clone();
 
 
@@ -1086,9 +1097,9 @@ namespace TemplateSystem.ViewModels
 
 
             TemplateWindowDisplay(SourceTemplateImage, null, null, templateContour, null);
-            SafeHalconDispose(templateContour);
-            //匹配相似度结果显示
-            matchResultModels.Clear();
+
+
+            //匹配相似度结果显示          
             for (int i = 0; i < list.Count; i++)
             {
                 list[i].Dispose();
@@ -1103,12 +1114,13 @@ namespace TemplateSystem.ViewModels
                 };
                 matchResultModels.Add(data);
             }
+
             _eventAggregator.GetEvent<WindowCommunicationEvent>().Publish(matchResultModels);
-            //pResult.Dispose();
+            matchResultModels.Clear();
             recognitionResult.Dispose();
             list.Clear();
-
             recognitionResult = null;
+            SafeHalconDispose(templateContour);
 
             TimeSpan consumeTime = endTime.Subtract(startTime);
             RecognitionConsumptionTime = Convert.ToString(Convert.ToInt32(consumeTime.TotalMilliseconds)) + " ms"; ;
@@ -1149,7 +1161,7 @@ namespace TemplateSystem.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 手动定位轮毂
         /// </summary>
@@ -1197,7 +1209,7 @@ namespace TemplateSystem.ViewModels
             if (InPoseWheelImage == null || !InPoseWheelImage.IsInitialized())
             {
                 await this._dialogCoordinator.ShowMessageAsync(this, "提示", $"请先执行定位轮毂！").ContinueWith(t => Console.WriteLine(t.Result));
-              
+
                 return;
             }
 
@@ -1535,7 +1547,7 @@ namespace TemplateSystem.ViewModels
 
 
 
-       
+
         public void GetAllImageGray()
         {
 
@@ -1553,10 +1565,10 @@ namespace TemplateSystem.ViewModels
                 SafeHalconDispose(grayImage);
             }
 
-           
+
         }
 
-        
+
         /// <summary>
         /// 参数修改后更新参数与保存
         /// </summary>
@@ -1587,8 +1599,8 @@ namespace TemplateSystem.ViewModels
             return value;
         }
 
-       
-       
+
+
 
 
 

@@ -45,6 +45,7 @@ namespace TemplateSystem.Views
 
         private void ScrollToIndex(int index)
         {
+           
             if (TemplateDataGrid.Items.Count > index)
             {
                 TemplateDataGrid.ScrollIntoView(TemplateDataGrid.Items[index]);
