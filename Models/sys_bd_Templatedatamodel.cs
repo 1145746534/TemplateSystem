@@ -18,6 +18,17 @@ namespace TemplateSystem.Models
         private float _wheelHeight;
         private float _fullGary;
         private string _wheelStyle;
+
+        private float _positionCircleRow;
+        private float _positionCircleColumn;
+        private float _positionCircleRadius;
+        private float _circumCircleRadius;
+
+        private float _templateAreaCenterRow;
+        private float _templateAreaCenterColumn;
+
+
+
         /// <summary>
         /// 序号
         /// </summary>
@@ -62,6 +73,66 @@ namespace TemplateSystem.Models
         {
             get { return _wheelStyle; }
             set { SetProperty(ref _wheelStyle, value); }
+        }
+
+        /// <summary>
+        /// 定位圆Row
+        /// </summary>
+        [SqlSugar.SugarColumn(IsNullable = false)]
+        public float PositionCircleRow
+        {
+            get { return _positionCircleRow; }
+            set { SetProperty(ref _positionCircleRow, value); }
+        }
+
+        /// <summary>
+        /// 定位圆Column
+        /// </summary>
+        [SqlSugar.SugarColumn(IsNullable = false)]
+        public float PositionCircleColumn
+        {
+            get { return _positionCircleColumn; }
+            set { SetProperty(ref _positionCircleColumn, value); }
+        }
+
+        /// <summary>
+        /// 定位圆半径
+        /// </summary>
+        [SqlSugar.SugarColumn(IsNullable = false)]
+        public float PositionCircleRadius
+        {
+            get { return _positionCircleRadius; }
+            set { SetProperty(ref _positionCircleRadius, value); }
+        }
+
+        /// <summary>
+        /// 外接圆半径
+        /// </summary>
+        [SqlSugar.SugarColumn(IsNullable = false)]
+        public float CircumCircleRadius
+        {
+            get { return _circumCircleRadius; }
+            set { SetProperty(ref _circumCircleRadius, value); }
+        }
+
+        /// <summary>
+        /// 模板区域中心点Row
+        /// </summary>
+        [SqlSugar.SugarColumn(IsNullable = false)]
+        public float TemplateAreaCenterRow
+        {
+            get { return _templateAreaCenterRow; }
+            set { SetProperty(ref _templateAreaCenterRow, value); }
+        }
+
+        /// <summary>
+        /// 模板区域中心点Column
+        /// </summary>
+        [SqlSugar.SugarColumn(IsNullable = false)]
+        public float TemplateAreaCenterColumn
+        {
+            get { return _templateAreaCenterColumn; }
+            set { SetProperty(ref _templateAreaCenterColumn, value); }
         }
 
         /// <summary>
@@ -145,7 +216,13 @@ namespace TemplateSystem.Models
                 UpdateTime = this.UpdateTime,     // DateTime 是值类型
                 LastUsedTime = this.LastUsedTime,
                 TemplatePath = this.TemplatePath,
-                TemplatePicturePath = this.TemplatePicturePath
+                TemplatePicturePath = this.TemplatePicturePath,
+                PositionCircleRow = this.PositionCircleRow,
+                PositionCircleColumn = this.PositionCircleColumn,
+                PositionCircleRadius = this.PositionCircleRadius,
+                CircumCircleRadius = this.CircumCircleRadius,
+                TemplateAreaCenterRow = this.TemplateAreaCenterRow,
+                TemplateAreaCenterColumn = this.TemplateAreaCenterColumn,
             };
         }
     }

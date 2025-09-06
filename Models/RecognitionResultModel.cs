@@ -65,14 +65,16 @@ namespace TemplateSystem.Models
         public float InnerCircleGary { get; set; }
 
         /// <summary>
-        /// 识别的中心行坐标
+        /// 中心行坐标
         /// </summary>
         public double CenterRow { get; set; }
 
         /// <summary>
-        /// 识别的中心列坐标
+        /// 中心列坐标
         /// </summary>
         public double CenterColumn { get; set; }
+
+        public double Radius { get; set; }
 
         /// <summary>
         ///识别的弧度
@@ -84,12 +86,20 @@ namespace TemplateSystem.Models
         /// </summary>
         public HObject RecognitionContour { get; set; }
 
+        /// <summary>
+        /// 仿射变化矩阵
+        /// </summary>
+        public HTuple HomMat2D { get; set; }
 
         public  void Dispose()
         {
             if (RecognitionContour != null)
             {
-                RecognitionContour.Dispose();
+                RecognitionContour?.Dispose();
+            }
+            if (HomMat2D != null)
+            {
+                HomMat2D?.Dispose();
             }
         }
     }

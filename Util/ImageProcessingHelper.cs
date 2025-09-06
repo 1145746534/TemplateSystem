@@ -720,20 +720,47 @@ namespace TemplateSystem.Util
 
                             HOperatorSet.GetGenericShapeModelResultObject(out HObject ho_MatchContour, hv_MatchResultID,
                                                                             maxIndex, "contours");
+
+                            //get_generic_shape_model_result(MatchResultID, I, 'hom_mat_2d', HomMat2D)
+                            //hom_mat2d_identity(AlignmentHomMat2D)
+                            //hom_mat2d_translate(AlignmentHomMat2D, -RefRow, -RefColumn, AlignmentHomMat2D)
+                            //hom_mat2d_compose(HomMat2D, AlignmentHomMat2D, AlignmentHomMat2D)
+                            
+
+                           
+
                             RecognitionResultModel temp = new RecognitionResultModel();
                             temp.RecognitionWheelType = templateData.WheelType;
                             temp.Similarity = Math.Round(maxValue, 3);
                             temp.WheelStyle = templateData.WheelStyle;
                             temp.FullFigureGary = fullGray;
                             temp.RecognitionContour = ho_MatchContour?.Clone();
+                            temp.CenterRow = templateData.PositionCircleRow;
+                            temp.CenterColumn = templateData.PositionCircleColumn;
+                            temp.Radius = templateData.CircumCircleRadius;
+                            if (templateData.TemplateAreaCenterRow != 0
+                                && templateData.TemplateAreaCenterColumn != 0)
+                            {
+                                HOperatorSet.GetGenericShapeModelResult(hv_MatchResultID, maxIndex, "hom_mat_2d", out HTuple HomMat2D);
+                                HOperatorSet.HomMat2dIdentity(out HTuple AlignmentHomMat2D);
+                                HOperatorSet.HomMat2dTranslate(AlignmentHomMat2D, -templateData.TemplateAreaCenterRow,
+                                    -templateData.TemplateAreaCenterColumn, out AlignmentHomMat2D);
+                                HOperatorSet.HomMat2dCompose(HomMat2D, AlignmentHomMat2D, out AlignmentHomMat2D);
+                                //Console.WriteLine($"变换矩阵1: {AlignmentHomMat2D.ToString()}");
+                                //Console.WriteLine($"变换矩阵2: {HomMat2D.ToString()}");
+                                temp.HomMat2D = AlignmentHomMat2D?.Clone();
+                                SafeDisposeHTuple(ref HomMat2D);
+                            }
+                           
                             recognitionResults.Add(temp);
                             SafeHalconDispose(ho_MatchContour);
-                            if (maxIndex > 0.85)
-                            {
-                                temp.status = "识别成功";
-                                result = temp;
-                                break;
-                            }
+                           
+                            //if (maxValue > 0.85)
+                            //{
+                            //    temp.status = "识别成功";
+                            //    result = temp;
+                            //    break;
+                            //}
 
                         }
 
@@ -748,7 +775,42 @@ namespace TemplateSystem.Util
                 if (TryGetBestMatch(recognitionResults, minSimilarity + 0.05, out result))
                 {
                     result.status = "识别成功";
-                    
+
+                    //-----验证----
+                    TemplatedataModel target = templateDatas.FirstOrDefault(t => t.WheelType == result.RecognitionWheelType);
+                    HObject ho_ModelContours;
+                   
+                    HOperatorSet.GetShapeModelContours(out ho_ModelContours, target.Template, 1);
+                    //// 计算模板轮廓的中心
+                    HObject ho_ModelRegion;
+                    HOperatorSet.GenRegionContourXld(ho_ModelContours, out ho_ModelRegion, "filled");
+                    HTuple hv_AreaModel, hv_RowModel, hv_ColModel;
+                    HOperatorSet.AreaCenter(ho_ModelRegion, out hv_AreaModel, out hv_RowModel, out hv_ColModel);
+
+                    // 计算变换后轮廓的中心
+                    HObject ho_TransRegion;
+                    HOperatorSet.GenRegionContourXld(result.RecognitionContour, out ho_TransRegion, "filled");
+                    HTuple hv_AreaTrans, hv_RowTrans, hv_ColTrans;
+                    HOperatorSet.AreaCenter(ho_TransRegion, out hv_AreaTrans, out hv_RowTrans, out hv_ColTrans);
+
+                    // 计算平移量
+
+                    HTuple hv_RefRow1 = hv_RowTrans[hv_RowTrans.Length - 1].D - hv_RowModel[hv_RowModel.Length - 1].D;
+                    HTuple hv_RefColumn1 = hv_ColTrans[hv_ColTrans.Length - 1].D - hv_ColModel[hv_ColModel.Length - 1].D;
+                    Console.WriteLine($"实际参数 - hv_RefRow1:{target.TemplateAreaCenterRow} hv_RefColumn1:{target.TemplateAreaCenterColumn}");
+                    Console.WriteLine($"验证参数 - hv_RefRow2:{hv_RefRow1} hv_RefColumn2:{hv_RefColumn1}");
+
+                    if(target.TemplateAreaCenterRow == 0)
+                    {
+                        target.TemplateAreaCenterRow =(float) hv_RefRow1.D;
+                    }
+                    if (target.TemplateAreaCenterColumn == 0)
+                    {
+                        target.TemplateAreaCenterColumn = (float)hv_RefColumn1.D;
+                    }
+                    //-----验证-----
+
+
                 }
                 else
                 {

@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -20,15 +19,8 @@ using static TemplateSystem.Util.ImageProcessingHelper;
 using static TemplateSystem.Models.SystemDatas;
 using TemplateSystem.Util;
 using MahApps.Metro.Controls.Dialogs;
-using ControlzEx.Standard;
-using Google.Protobuf.Collections;
 using Prism.Events;
-using System.IO.Pipes;
-using System.Windows.Media.Media3D;
-using MySqlX.XDevAPI.Common;
-using Google.Protobuf.WellKnownTypes;
-using System.Xml.Linq;
-using System.Windows.Shapes;
+
 
 namespace TemplateSystem.ViewModels
 {
@@ -413,9 +405,26 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         HObject circleSector;
 
+        /// <summary>
+        /// 圆中心Column
+        /// </summary>
         double circleCol;
+        /// <summary>
+        /// 圆中心Row
+        /// </summary>
         double circleRow;
+        /// <summary>
+        /// 圆半径
+        /// </summary>
         double circleRadius;
+        /// <summary>
+        /// 模板中心Row
+        /// </summary>
+        double TemplateCenterRow;
+        /// <summary>
+        /// 模板中心Column
+        /// </summary>
+        double TemplateCenterColumn;
 
         private List<TemplatedataModel> templateDataList = new List<TemplatedataModel>();
         #endregion
@@ -752,9 +761,7 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         private void OrganizeTemplateDatas()
         {
-            //内部数据重新整理
-
-            //数据根据轮型还有轮毂样式排序
+            //内部数据重新整理 数据根据轮型还有轮毂样式排序
             var datas = TemplateDatas.OrderBy(x => x.WheelType).ThenBy(x => x.WheelStyle).ToList();
             for (int i = 0; i < datas.Count; i++)
             {
@@ -1027,7 +1034,7 @@ namespace TemplateSystem.ViewModels
         private async void RecognitionTest()
         {
 
-
+           
 
             if (templateDataList.Count == 0)
             {
@@ -1048,7 +1055,6 @@ namespace TemplateSystem.ViewModels
 
 
             //存储识别结果
-
             RecognitionResultModel recognitionResult = new RecognitionResultModel();
             List<RecognitionResultModel> list = new List<RecognitionResultModel>();
             recognitionResult = WheelRecognitionAlgorithm1(SourceTemplateImage, templateDataList, AngleStart, AngleExtent, MinSimilarity, out list);
@@ -1060,45 +1066,50 @@ namespace TemplateSystem.ViewModels
 
             DateTime endTime = DateTime.Now;
             HObject templateContour = null;
+            HObject contoursAffineTrans = null;
+            HObject wheelContour = null;
             if (recognitionResult.RecognitionWheelType != "NG")
             {
                 //定位到识别的轮型
                 int index = TemplateDatas
                 .Select((item, idx) => new { Item = item, Index = idx })
                 .FirstOrDefault(x => x.Item.WheelType == recognitionResult.RecognitionWheelType)?.Index ?? -1;
-                if (index != -1)
+                if (index != -1) 
                 {
                     DataGridSelectedItem = TemplateDatas[index];
                     DataGridSelectedIndex = index;
                     _eventAggregator.GetEvent<ScrollToIndexEvent>().Publish(index);
                 }
-               
 
+                //识别成功后 把这个轮形上次使用时间刷新
+                //string _type = recognitionResult.RecognitionWheelType;
+                //var results = templateDataList
+                //    .Where(t => t.WheelType != null &&
+                //                t.WheelType == _type);
+                //foreach (TemplatedataModel item in results)
+                //    item.UseTemplate();
+
+                //显示的轮廓
                 templateContour = recognitionResult.RecognitionContour.Clone();
-
-
                 RecognitionWheelType = recognitionResult.RecognitionWheelType;
                 RecognitionSimilarity = recognitionResult.Similarity.ToString();
-                //ReleaseUnusedTemplates();
-                //识别成功后 把这个轮形上次使用时间刷新
-                string _type = recognitionResult.RecognitionWheelType;
-
-                var results = templateDataList
-                    .Where(t => t.WheelType != null &&
-                                t.WheelType == _type);
-
-
-                foreach (TemplatedataModel item in results)
+                                                                      
+                if (recognitionResult.HomMat2D!=null)
                 {
-                    item.UseTemplate();
-                }
+                    HOperatorSet.GenCircleContourXld(out wheelContour, recognitionResult.CenterRow,
+                            recognitionResult.CenterColumn, recognitionResult.Radius, 0, (new HTuple(360)).TupleRad(), "positive", 1.0);
+                    HOperatorSet.AffineTransContourXld(wheelContour, out contoursAffineTrans, recognitionResult.HomMat2D);
+
+                }               
             }
 
+            //显示区域
+            //HOperatorSet.GetDomain(SourceTemplateImage, out HObject imageDomain);
+            ////外接圆
+            //HOperatorSet.SmallestCircle(imageDomain, out HTuple row, out HTuple column, out HTuple radius);
+            //HOperatorSet.GenCircleContourXld(out HObject CircleCir, row, column, radius, 0, (new HTuple(360)).TupleRad(), "positive", 1.0);
 
-
-            TemplateWindowDisplay(SourceTemplateImage, null, null, templateContour, null);
-
-
+            TemplateWindowDisplay(SourceTemplateImage, null, contoursAffineTrans, templateContour, null);
             //匹配相似度结果显示          
             for (int i = 0; i < list.Count; i++)
             {
@@ -1114,13 +1125,15 @@ namespace TemplateSystem.ViewModels
                 };
                 matchResultModels.Add(data);
             }
-
             _eventAggregator.GetEvent<WindowCommunicationEvent>().Publish(matchResultModels);
+
             matchResultModels.Clear();
             recognitionResult.Dispose();
             list.Clear();
             recognitionResult = null;
             SafeHalconDispose(templateContour);
+            SafeHalconDispose(wheelContour);
+            SafeHalconDispose(contoursAffineTrans);
 
             TimeSpan consumeTime = endTime.Subtract(startTime);
             RecognitionConsumptionTime = Convert.ToString(Convert.ToInt32(consumeTime.TotalMilliseconds)) + " ms"; ;
@@ -1235,8 +1248,7 @@ namespace TemplateSystem.ViewModels
             }
 
 
-            HOperatorSet.TrainGenericShapeModel(reduced, hv_ModelID)
-                ;
+            HOperatorSet.TrainGenericShapeModel(reduced, hv_ModelID);
 
 
             //显示轮毂线条
@@ -1245,6 +1257,10 @@ namespace TemplateSystem.ViewModels
             HOperatorSet.VectorAngleToRigid(0, 0, 0, hv_RefRow, hv_RefColumn, 0, out hv_HomMat2D);
             HOperatorSet.AffineTransContourXld(ho_ModelContours, out ho_TransContours, hv_HomMat2D);
             TemplateWindowDisplay(InPoseWheelImage, null, null, ho_TransContours, null);
+
+            //记录信息
+            TemplateCenterRow = hv_RefRow.D;
+            TemplateCenterColumn = hv_RefColumn.D;
 
             //数据参数反馈
             HOperatorSet.GetGenericShapeModelParam(hv_ModelID, "contrast_high", out HTuple hv_contrast_high);
@@ -1259,6 +1275,8 @@ namespace TemplateSystem.ViewModels
             this.ContrastHigh = hv_contrast_high.I;
             this.ContrastLow = hv_contrast_low.I;
             this.MinSize = hv_min_size.I;
+
+
 
 
             SafeDisposeHObject(ref ho_ModelContours);
@@ -1327,7 +1345,7 @@ namespace TemplateSystem.ViewModels
                         );
                     });
 
-                    // 在UI线程更新数据 (确保线程安全)
+                    
                     if (isUpdate)
                     {
                         DataGridSelectedItem.UpdateTime = DateTime.Now;
@@ -1341,6 +1359,12 @@ namespace TemplateSystem.ViewModels
                     DataGridSelectedItem.TemplatePath = aPath;
                     DataGridSelectedItem.TemplatePicturePath = tPath;
                     DataGridSelectedItem.LastUsedTime = DateTime.Now;
+                    DataGridSelectedItem.PositionCircleRow =(float) circleRow;
+                    DataGridSelectedItem.PositionCircleColumn = (float)circleCol;
+                    DataGridSelectedItem.PositionCircleRadius = (float)circleRadius;
+                    DataGridSelectedItem.CircumCircleRadius = (float)circleRadius;
+                    DataGridSelectedItem.TemplateAreaCenterRow = (float)TemplateCenterRow;
+                    DataGridSelectedItem.TemplateAreaCenterColumn = (float)TemplateCenterColumn;
                     if (isUpdate) //更新
                     {
                         UpdateTemplate(DataGridSelectedItem.WheelType);
@@ -1390,7 +1414,8 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         private async void DisplayTemplates1()
         {
-
+             GetAllImageTemplateCenter();
+            // GetAllImageSmallestCircle();
 
 
             if (DataGridSelectedItem == null)
@@ -1402,11 +1427,28 @@ namespace TemplateSystem.ViewModels
             string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".shm";
             string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".hobj";
             string strPath = DataGridSelectedItem.TemplatePicturePath;
+
+
+
             if (File.Exists(strPath))
             {
                 HOperatorSet.ReadImage(out HObject Image, strPath);
                 TemplateImage = Image.Clone();
+                //显示区域
+                HOperatorSet.GetDomain(TemplateImage, out HObject imageDomain);
+                //外接圆
+                HOperatorSet.SmallestCircle(imageDomain, out HTuple row, out HTuple column, out HTuple radius);
 
+                //HOperatorSet.InnerCircle(imageDomain, out HTuple row, out HTuple column, out HTuple radius);
+                HOperatorSet.GenCircleContourXld(out HObject wheelContour, row, column, radius, 0, (new HTuple(360)).TupleRad(), "positive", 1.0);
+
+                HTuple hv_ModelID;
+                HObject ho_ModelContours;
+                HOperatorSet.ReadShapeModel(aPath, out hv_ModelID);
+                HOperatorSet.GetShapeModelContours(out ho_ModelContours, hv_ModelID, 1);
+
+                HOperatorSet.AreaCenterXld(ho_ModelContours, out HTuple area, out row, out column, out HTuple point);
+                Console.WriteLine($"中心row:{row.D} col:{column.D}");
                 HObject ho_TransContours = new HObject();
                 //读取模板 与 模板区域
                 if (File.Exists(aPath) && File.Exists(bParh))
@@ -1415,33 +1457,36 @@ namespace TemplateSystem.ViewModels
                     HTuple hv_RefRow = new HTuple(), hv_RefColumn = new HTuple();
                     HTuple hv_HomMat2D = new HTuple();
 
-                    HObject ho_ModelContours;
+
 
                     HObject ho_circleSector;
-                    HTuple hv_ModelID;
+
 
                     HOperatorSet.ReadRegion(out ho_circleSector, bParh);
-                    HOperatorSet.ReadShapeModel(aPath, out hv_ModelID);
 
-                    HOperatorSet.GetShapeModelContours(out ho_ModelContours, hv_ModelID, 1);
                     //显示轮毂线条
                     HOperatorSet.AreaCenter(ho_circleSector, out hv_ModelRegionArea, out hv_RefRow, out hv_RefColumn);
                     HOperatorSet.VectorAngleToRigid(0, 0, 0, hv_RefRow, hv_RefColumn, 0, out hv_HomMat2D);
+
+                    HTuple matchRow, matchCol;
+
+
                     HOperatorSet.AffineTransContourXld(ho_ModelContours, out ho_TransContours, hv_HomMat2D);
                     SafeHalconDispose(hv_RefRow);
                     SafeHalconDispose(hv_RefColumn);
                     SafeHalconDispose(hv_HomMat2D);
-                    SafeHalconDispose(ho_ModelContours);
+
 
                     SafeHalconDispose(ho_circleSector);
-                    SafeHalconDispose(hv_ModelID);
-                }
 
+                }
+                SafeHalconDispose(ho_ModelContours);
+                SafeHalconDispose(hv_ModelID);
 
                 //TemplateWindowDisplay(InPoseWheelImage, null, null, ho_TransContours, null);
 
                 //InnerCircleGary = DataGridSelectedItem.InnerCircleGary.ToString();
-                TemplateWindowDisplay(Image, null, null, ho_TransContours, null);
+                TemplateWindowDisplay(Image, null, wheelContour, ho_TransContours, null);
                 SafeHalconDispose(Image);
                 SafeHalconDispose(ho_TransContours);
 
@@ -1453,6 +1498,10 @@ namespace TemplateSystem.ViewModels
 
                 //EventMessage.SystemMessageDisplay("轮型" + DataGridSelectedItem.WheelType + "无模板图像，请先录入模板!", MessageType.Warning);
             }
+
+
+
+
         }
 
         /// <summary>
@@ -1545,9 +1594,171 @@ namespace TemplateSystem.ViewModels
 
 
 
+        public async void GetAllImageTemplateCenter()
+        {
+            foreach (sys_bd_Templatedatamodel item in TemplateDatas)
+            {
+                //if (item.TemplateAreaCenterRow == 0 && item.TemplateAreaCenterColumn == 0)
+                {
+                    string strPath = item.TemplatePicturePath;
+                    Console.WriteLine($"下标：{item.Index} 地址：{strPath}");
+
+
+                    if (File.Exists(strPath))
+                    {
+                        HOperatorSet.ReadImage(out HObject Image, strPath);
+                        SourceTemplateImage = Image.Clone();
 
 
 
+                        RecognitionTest();
+                        TemplatedataModel target = templateDataList.FirstOrDefault(t => t.WheelType == RecognitionWheelType);
+                        item.TemplateAreaCenterRow = target.TemplateAreaCenterRow;
+                        item.TemplateAreaCenterColumn = target.TemplateAreaCenterColumn;
+                        Console.WriteLine($"结果参数 - hv_RefRow3:{item.TemplateAreaCenterRow} hv_RefColumn3:{item.TemplateAreaCenterColumn}");
+
+
+                    }
+                    else
+                    {
+                        TemplateWindowDisplay(null, null, null, null, null);
+
+                    }
+                    await Task.Delay(500);
+                }
+               
+                
+            }
+            //OrganizeTemplateDatas();
+
+        }
+
+        /// <summary>
+        /// 获取所有图像的手动定位外接圆
+        /// </summary>
+        public async void GetAllImageSmallestCircle()
+        {
+
+
+            foreach (sys_bd_Templatedatamodel item in TemplateDatas)
+            {
+               
+                await Task.Delay(200);
+                DataGridSelectedItem = item;
+                DataGridSelectedIndex = item.Index;
+                _eventAggregator.GetEvent<ScrollToIndexEvent>().Publish(item.Index);
+                string strPath = item.TemplatePicturePath;
+                if (File.Exists(strPath))
+                {
+
+
+                    HOperatorSet.ReadImage(out HObject Image, strPath);
+                    TemplateImage = Image.Clone();
+                    //显示区域
+                    HOperatorSet.GetDomain(TemplateImage, out HObject imageDomain);
+                    //外接圆
+                    HOperatorSet.SmallestCircle(imageDomain, out HTuple row, out HTuple column, out HTuple radius);
+                    HOperatorSet.GenCircleContourXld(out HObject wheelContour, row, column, radius, 0, (new HTuple(360)).TupleRad(), "positive", 1.0);
+                    Console.WriteLine($"外接圆 - row:{row} column:{column} radius:{radius}");
+                    item.PositionCircleRow = (float)row.D;
+                    item.PositionCircleColumn = (float)column.D;
+                    item.PositionCircleRadius = (float)radius.D;
+                    item.CircumCircleRadius = (float)radius.D;
+                    string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + item.WheelType + ".shm";
+                    string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + item.WheelType + ".hobj";
+
+                    HTuple hv_ModelID;
+                    HObject ho_ModelContours;
+                    HOperatorSet.ReadShapeModel(aPath, out hv_ModelID);
+                    HOperatorSet.GetShapeModelContours(out ho_ModelContours, hv_ModelID, 1);
+
+                    //HOperatorSet.AreaCenterXld(ho_ModelContours, out HTuple area, out row, out column, out HTuple point);
+                    //Console.WriteLine($"中心row:{row.D} col:{column.D}");
+                    HObject ho_TransContours = new HObject();
+                    //读取模板 与 模板区域
+                    if (File.Exists(aPath) && File.Exists(bParh))
+                    {
+                        HTuple hv_ModelRegionArea = new HTuple();
+                        HTuple hv_RefRow = new HTuple(), hv_RefColumn = new HTuple();
+                        HTuple hv_HomMat2D = new HTuple();
+
+
+
+                        HObject ho_circleSector;
+
+
+                        HOperatorSet.ReadRegion(out ho_circleSector, bParh);
+
+                        //显示轮毂线条
+                        HOperatorSet.AreaCenter(ho_circleSector, out hv_ModelRegionArea, out hv_RefRow, out hv_RefColumn);
+                        HOperatorSet.VectorAngleToRigid(0, 0, 0, hv_RefRow, hv_RefColumn, 0, out hv_HomMat2D);
+                        Console.WriteLine($"转换参数 - hv_RefRow:{hv_RefRow} hv_RefColumn:{hv_RefColumn}");
+                        item.TemplateAreaCenterRow =(float) hv_RefRow.D;
+                        item.TemplateAreaCenterColumn =(float)hv_RefColumn.D;
+                        HOperatorSet.AffineTransContourXld(ho_ModelContours, out ho_TransContours, hv_HomMat2D);
+                        Console.WriteLine($"hv_HomMat2D:{hv_HomMat2D.ToString()}");
+
+
+                        //-----验证----
+                       
+                        //// 计算模板轮廓的中心
+                        HObject ho_ModelRegion;
+                        HOperatorSet.GenRegionContourXld(ho_ModelContours, out ho_ModelRegion, "filled");
+                        HTuple hv_AreaModel, hv_RowModel, hv_ColModel;
+                        HOperatorSet.AreaCenter(ho_ModelRegion, out hv_AreaModel, out hv_RowModel, out hv_ColModel);
+
+                        // 计算变换后轮廓的中心
+                        HObject ho_TransRegion;
+                        HOperatorSet.GenRegionContourXld(ho_TransContours, out ho_TransRegion, "filled");
+                        HTuple hv_AreaTrans, hv_RowTrans, hv_ColTrans;
+                        HOperatorSet.AreaCenter(ho_TransRegion, out hv_AreaTrans, out hv_RowTrans, out hv_ColTrans);
+
+                        // 计算平移量
+                       
+                        HTuple hv_RefRow1 = hv_RowTrans[hv_RowTrans.Length-1].D - hv_RowModel[hv_RowModel.Length - 1].D;
+                        HTuple hv_RefColumn1 = hv_ColTrans[hv_ColTrans.Length - 1].D - hv_ColModel[hv_ColModel.Length - 1].D;
+                        Console.WriteLine($"验证参数 - hv_RefRow1:{hv_RefRow1} hv_RefColumn1:{hv_RefColumn1}");
+
+
+                        //-----验证-----
+
+
+
+
+                        SafeHalconDispose(hv_RefRow);
+                        SafeHalconDispose(hv_RefColumn);
+                        SafeHalconDispose(hv_HomMat2D);
+
+
+                        SafeHalconDispose(ho_circleSector);
+
+                    }
+
+
+
+                   
+
+                    TemplateWindowDisplay(TemplateImage, null, wheelContour, ho_TransContours, null);
+                    SafeHalconDispose(Image);
+
+
+                }
+                else
+                {
+                    TemplateWindowDisplay(null, null, null, null, null);
+
+                }
+
+            }
+
+
+            //OrganizeTemplateDatas();
+
+        }
+
+        /// <summary>
+        /// 所有图像的平均灰度值
+        /// </summary>
         public void GetAllImageGray()
         {
 
