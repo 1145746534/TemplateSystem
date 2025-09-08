@@ -1337,20 +1337,21 @@ namespace TemplateSystem.ViewModels
                     {
                         isUpdate = true;
                     }
-
-
+                    HOperatorSet.WriteShapeModel(hv_ModelID, aPath);
+                    HOperatorSet.WriteRegion(circleSector, bParh);
+                    HOperatorSet.WriteImage(InPoseWheelImage, "tiff", 0, tPath);
                     // 在后台线程执行耗时操作
-                    await Task.Run(async () =>
-                    {
+                    //await Task.Run(async () =>
+                    //{
 
-                        // 异步保存模板文件
-                        await Task.WhenAll(
-                            Task.Run(() => HOperatorSet.WriteShapeModel(hv_ModelID, aPath)),
-                            Task.Run(() => HOperatorSet.WriteRegion(circleSector, bParh)),
-                            Task.Run(() => HOperatorSet.WriteImage(InPoseWheelImage, "tiff", 0, tPath)
-                            )
-                        );
-                    });
+                    //    // 异步保存模板文件
+                    //    await Task.WhenAll(
+                    //        Task.Run(() => HOperatorSet.WriteShapeModel(hv_ModelID, aPath)),
+                    //        Task.Run(() => HOperatorSet.WriteRegion(circleSector, bParh)),
+                    //        Task.Run(() => HOperatorSet.WriteImage(InPoseWheelImage, "tiff", 0, tPath)
+                    //        )
+                    //    );
+                    //});
 
 
                     if (isUpdate)
