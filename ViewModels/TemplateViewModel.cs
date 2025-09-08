@@ -269,6 +269,13 @@ namespace TemplateSystem.ViewModels
 
         private bool IsParameterSettingDialog = false;
 
+        /// <summary>
+        /// 模板参数修改界面是否打开
+        /// </summary>
+        private bool IsTemplateDataEditDialog = false;
+
+
+
 
 
         #endregion
@@ -795,14 +802,14 @@ namespace TemplateSystem.ViewModels
             else if (obj == "保存") SaveTemplate1();
             else if (obj == "显示模板") DisplayTemplates1();
             else if (obj == "删除模板") DelTemplate();
-
-
-
             else if (obj == "匹配结果") MatchResult();
+            else if (obj == "数据校准") Calibration();
 
             //else if (obj == "模板检查") TemplateExamine();
             else return;
         }
+
+       
 
 
         /// <summary>
@@ -1034,7 +1041,7 @@ namespace TemplateSystem.ViewModels
         private async void RecognitionTest()
         {
 
-           
+
 
             if (templateDataList.Count == 0)
             {
@@ -1074,7 +1081,7 @@ namespace TemplateSystem.ViewModels
                 int index = TemplateDatas
                 .Select((item, idx) => new { Item = item, Index = idx })
                 .FirstOrDefault(x => x.Item.WheelType == recognitionResult.RecognitionWheelType)?.Index ?? -1;
-                if (index != -1) 
+                if (index != -1)
                 {
                     DataGridSelectedItem = TemplateDatas[index];
                     DataGridSelectedIndex = index;
@@ -1093,14 +1100,14 @@ namespace TemplateSystem.ViewModels
                 templateContour = recognitionResult.RecognitionContour.Clone();
                 RecognitionWheelType = recognitionResult.RecognitionWheelType;
                 RecognitionSimilarity = recognitionResult.Similarity.ToString();
-                                                                      
-                if (recognitionResult.HomMat2D!=null)
+
+                if (recognitionResult.HomMat2D != null)
                 {
                     HOperatorSet.GenCircleContourXld(out wheelContour, recognitionResult.CenterRow,
                             recognitionResult.CenterColumn, recognitionResult.Radius, 0, (new HTuple(360)).TupleRad(), "positive", 1.0);
                     HOperatorSet.AffineTransContourXld(wheelContour, out contoursAffineTrans, recognitionResult.HomMat2D);
 
-                }               
+                }
             }
 
             //显示区域
@@ -1345,7 +1352,7 @@ namespace TemplateSystem.ViewModels
                         );
                     });
 
-                    
+
                     if (isUpdate)
                     {
                         DataGridSelectedItem.UpdateTime = DateTime.Now;
@@ -1359,7 +1366,7 @@ namespace TemplateSystem.ViewModels
                     DataGridSelectedItem.TemplatePath = aPath;
                     DataGridSelectedItem.TemplatePicturePath = tPath;
                     DataGridSelectedItem.LastUsedTime = DateTime.Now;
-                    DataGridSelectedItem.PositionCircleRow =(float) circleRow;
+                    DataGridSelectedItem.PositionCircleRow = (float)circleRow;
                     DataGridSelectedItem.PositionCircleColumn = (float)circleCol;
                     DataGridSelectedItem.PositionCircleRadius = (float)circleRadius;
                     DataGridSelectedItem.CircumCircleRadius = (float)circleRadius;
@@ -1414,7 +1421,7 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         private async void DisplayTemplates1()
         {
-             GetAllImageTemplateCenter();
+            //GetAllImageTemplateCenter();
             // GetAllImageSmallestCircle();
 
 
@@ -1591,7 +1598,23 @@ namespace TemplateSystem.ViewModels
 
         }
 
+        private void Calibration()
+        {
+            if (DataGridSelectedItem != null)
+            {
+                string strPath = DataGridSelectedItem.TemplatePicturePath;
+                if (File.Exists(strPath))
+                {
+                    HOperatorSet.ReadImage(out HObject Image, strPath);
+                    SourceTemplateImage = Image.Clone();
+                    RecognitionTest();
+                    TemplatedataModel target = templateDataList.FirstOrDefault(t => t.WheelType == RecognitionWheelType);
+                    Console.WriteLine($"数据校准 - hv_RefRow:{target.TemplateAreaCenterRow} hv_RefColumn:{target.TemplateAreaCenterColumn}");
 
+                }
+
+            }
+        }
 
 
         public async void GetAllImageTemplateCenter()
@@ -1626,8 +1649,8 @@ namespace TemplateSystem.ViewModels
                     }
                     await Task.Delay(500);
                 }
-               
-                
+
+
             }
             //OrganizeTemplateDatas();
 
@@ -1642,7 +1665,7 @@ namespace TemplateSystem.ViewModels
 
             foreach (sys_bd_Templatedatamodel item in TemplateDatas)
             {
-               
+
                 await Task.Delay(200);
                 DataGridSelectedItem = item;
                 DataGridSelectedIndex = item.Index;
@@ -1693,14 +1716,14 @@ namespace TemplateSystem.ViewModels
                         HOperatorSet.AreaCenter(ho_circleSector, out hv_ModelRegionArea, out hv_RefRow, out hv_RefColumn);
                         HOperatorSet.VectorAngleToRigid(0, 0, 0, hv_RefRow, hv_RefColumn, 0, out hv_HomMat2D);
                         Console.WriteLine($"转换参数 - hv_RefRow:{hv_RefRow} hv_RefColumn:{hv_RefColumn}");
-                        item.TemplateAreaCenterRow =(float) hv_RefRow.D;
-                        item.TemplateAreaCenterColumn =(float)hv_RefColumn.D;
+                        item.TemplateAreaCenterRow = (float)hv_RefRow.D;
+                        item.TemplateAreaCenterColumn = (float)hv_RefColumn.D;
                         HOperatorSet.AffineTransContourXld(ho_ModelContours, out ho_TransContours, hv_HomMat2D);
                         Console.WriteLine($"hv_HomMat2D:{hv_HomMat2D.ToString()}");
 
 
                         //-----验证----
-                       
+
                         //// 计算模板轮廓的中心
                         HObject ho_ModelRegion;
                         HOperatorSet.GenRegionContourXld(ho_ModelContours, out ho_ModelRegion, "filled");
@@ -1714,8 +1737,8 @@ namespace TemplateSystem.ViewModels
                         HOperatorSet.AreaCenter(ho_TransRegion, out hv_AreaTrans, out hv_RowTrans, out hv_ColTrans);
 
                         // 计算平移量
-                       
-                        HTuple hv_RefRow1 = hv_RowTrans[hv_RowTrans.Length-1].D - hv_RowModel[hv_RowModel.Length - 1].D;
+
+                        HTuple hv_RefRow1 = hv_RowTrans[hv_RowTrans.Length - 1].D - hv_RowModel[hv_RowModel.Length - 1].D;
                         HTuple hv_RefColumn1 = hv_ColTrans[hv_ColTrans.Length - 1].D - hv_ColModel[hv_ColModel.Length - 1].D;
                         Console.WriteLine($"验证参数 - hv_RefRow1:{hv_RefRow1} hv_RefColumn1:{hv_RefColumn1}");
 
@@ -1736,7 +1759,7 @@ namespace TemplateSystem.ViewModels
 
 
 
-                   
+
 
                     TemplateWindowDisplay(TemplateImage, null, wheelContour, ho_TransContours, null);
                     SafeHalconDispose(Image);
@@ -1800,15 +1823,15 @@ namespace TemplateSystem.ViewModels
             SqlAccess.SystemDatasUpdateable("TemplateEndAngle", TemplateEndAngle.ToString());
         }
 
-        private string DialogParametersSet(IDialogParameters paraResult, string name)
-        {
-            string value = paraResult.GetValue<string>(name);
-            if (value != null)
-            {
-                SqlAccess.SystemDatasUpdateable(name, value);
-            }
-            return value;
-        }
+        //private string DialogParametersSet(IDialogParameters paraResult, string name)
+        //{
+        //    string value = paraResult.GetValue<string>(name);
+        //    if (value != null)
+        //    {
+        //        SqlAccess.SystemDatasUpDialogParameterseable(name, value);
+        //    }
+        //    return value;
+        //}
 
 
 
@@ -1824,24 +1847,39 @@ namespace TemplateSystem.ViewModels
         /// <param name="e"></param>
         public void MenuItem_Click(object sender, RoutedEventArgs e)
         {
-            var parameters = new DialogParameters
+            if (!IsTemplateDataEditDialog)
             {
-                { "para", DataGridSelectedItem.Clone()}
-            };
-            _dialogService.ShowDialog("TemplateDataEdit", parameters, result =>
-            {
-                // 处理结果
-                if (result.Parameters.Count != 0 && result.Parameters.ContainsKey("Result"))
+                IsTemplateDataEditDialog = true;
+                var parameters = new DialogParameters
                 {
+                        { "para", DataGridSelectedItem.Clone()}
+                };
+                _dialogService.Show("TemplateDataEdit", parameters, result =>
+                {
+                    // 处理结果
+                    if (result.Parameters.Count != 0 && result.Parameters.ContainsKey("Result"))
+                    {
 
-                    sys_bd_Templatedatamodel returnItem = result.Parameters.GetValue<sys_bd_Templatedatamodel>("Result");
+                        sys_bd_Templatedatamodel returnItem = result.Parameters.GetValue<sys_bd_Templatedatamodel>("Result");
+                        //界面显示
+                        DataGridSelectedItem.WheelHeight = returnItem.WheelHeight;
+                        DataGridSelectedItem.WheelStyle = returnItem.WheelStyle;
+                        DataGridSelectedItem.FullGary = returnItem.FullGary;
+                        DataGridSelectedItem.TemplateAreaCenterRow = returnItem.TemplateAreaCenterRow;
+                        DataGridSelectedItem.TemplateAreaCenterColumn = returnItem.TemplateAreaCenterColumn;
+                        //数据保存
+                        UpdataTemplateData(DataGridSelectedItem);
+                        TemplatedataModel target = templateDataList.FirstOrDefault(t => t.WheelType == returnItem.WheelType);
+                        target.WheelHeight = returnItem.WheelHeight;
+                        target.WheelStyle = returnItem.WheelStyle;
+                        target.FullGary = returnItem.FullGary;
+                        target.TemplateAreaCenterRow = returnItem.TemplateAreaCenterRow;
+                        target.TemplateAreaCenterColumn = returnItem.TemplateAreaCenterColumn;
+                    }
+                    IsTemplateDataEditDialog = false;
+                });
+            }
 
-                    DataGridSelectedItem.WheelHeight = returnItem.WheelHeight;
-                    DataGridSelectedItem.WheelStyle = returnItem.WheelStyle;
-                    DataGridSelectedItem.FullGary = returnItem.FullGary;
-                    UpdataTemplateData(DataGridSelectedItem);
-                }
-            });
         }
 
 

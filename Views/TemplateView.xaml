@@ -113,6 +113,7 @@
                             <RowDefinition/>
                             <RowDefinition/>
                             <RowDefinition/>
+                            <RowDefinition/>
                         </Grid.RowDefinitions>
                         <Button Grid.Row="0" Grid.Column="0" Content="添加模板"   FontSize="14" 
                                 Command="{Binding TemplateBtnCommand}" CommandParameter="添加模板"/>
@@ -143,8 +144,9 @@
                             <TextBlock  Text="{Binding Value, ElementName=EraserSlider, StringFormat={}{0:F0}}"
                                     VerticalAlignment="Center" Margin="0,0,0,0"/>
                         </StackPanel>
+                        <Button Grid.Row="4" Grid.Column="0" Content="数据校准"  FontSize="14" 
+                                Command="{Binding TemplateBtnCommand}" CommandParameter="数据校准"/>
 
-                        
 
 
                     </Grid>

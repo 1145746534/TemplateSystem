@@ -54,8 +54,15 @@
             <TextBlock Grid.Row="0" Grid.Column="2" Text="全局灰度均值：" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Right"/>
             <TextBox Grid.Row="0" Grid.Column="3" x:Name="DarkMaxThreshold_tbx"   HorizontalContentAlignment="Center"
              Text="{Binding MessageTemplatedata.FullGary, Mode=TwoWay}" Width="120" FontSize="18" HorizontalAlignment="Left" Margin="0,2"/>
-            <TextBlock Grid.Row="2" Text="轮毂高度：" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Right"/>
+            <TextBlock Grid.Row="2" Text="模板中心行坐标：" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Right"/>
             <TextBox Grid.Row="2" Grid.Column="1"  HorizontalContentAlignment="Center"
+                    Text="{Binding MessageTemplatedata.TemplateAreaCenterRow, Mode=TwoWay}" Width="120" FontSize="18" HorizontalAlignment="Left" Margin="0,2" IsReadOnly="False"/>
+            <TextBlock Grid.Row="2" Grid.Column="2" Text="模板中心列坐标：" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Right"/>
+            <TextBox Grid.Row="2" Grid.Column="3"  HorizontalContentAlignment="Center"
+                    Text="{Binding MessageTemplatedata.TemplateAreaCenterColumn, Mode=TwoWay}" Width="120" FontSize="18" HorizontalAlignment="Left" Margin="0,2" IsReadOnly="False"/>
+
+            <TextBlock Grid.Row="3" Text="轮毂高度：" VerticalAlignment="Center" FontSize="18" HorizontalAlignment="Right"/>
+            <TextBox Grid.Row="3" Grid.Column="1"  HorizontalContentAlignment="Center"
                 Text="{Binding MessageTemplatedata.WheelHeight, Mode=TwoWay}" Width="120" FontSize="18" HorizontalAlignment="Left" Margin="0,2" IsReadOnly="False"/>
 
         </Grid>
