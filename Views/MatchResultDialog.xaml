@@ -20,7 +20,7 @@
                 <DataGridTextColumn Header="轮毂型号" Binding="{Binding WheelType}" Width="150"  />
                 <DataGridTextColumn Header="相似度" Binding="{Binding Similarity}" Width="50"   />
                 <DataGridTextColumn Header="全图灰度" Binding="{Binding FullFigureGary}" Width="80"   />
-                <DataGridTextColumn Header="内圈灰度" Binding="{Binding InnerCircleGary}" Width="80"   />
+                <DataGridTextColumn Header="样式" Binding="{Binding WheelStyle}" Width="80"   />
             </DataGrid.Columns>
         </DataGrid>
     </Border>

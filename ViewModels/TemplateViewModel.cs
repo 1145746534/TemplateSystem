@@ -1117,7 +1117,8 @@ namespace TemplateSystem.ViewModels
             //HOperatorSet.GenCircleContourXld(out HObject CircleCir, row, column, radius, 0, (new HTuple(360)).TupleRad(), "positive", 1.0);
 
             TemplateWindowDisplay(SourceTemplateImage, null, contoursAffineTrans, templateContour, null);
-            //匹配相似度结果显示          
+            //匹配相似度结果显示
+            matchResultModels.Clear();
             for (int i = 0; i < list.Count; i++)
             {
                 list[i].Dispose();
@@ -1128,13 +1129,13 @@ namespace TemplateSystem.ViewModels
                     WheelType = list[i].RecognitionWheelType,
                     Similarity = list[i].Similarity.ToString(),
                     FullFigureGary = list[i].FullFigureGary.ToString(),
-                    InnerCircleGary = list[i].InnerCircleGary.ToString()
+                    WheelStyle = list[i].WheelStyle
                 };
                 matchResultModels.Add(data);
             }
             _eventAggregator.GetEvent<WindowCommunicationEvent>().Publish(matchResultModels);
 
-            matchResultModels.Clear();
+         
             recognitionResult.Dispose();
             list.Clear();
             recognitionResult = null;

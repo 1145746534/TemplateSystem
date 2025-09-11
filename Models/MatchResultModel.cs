@@ -24,9 +24,9 @@ namespace TemplateSystem.Models
         public string FullFigureGary { get; set; }
 
         /// <summary>
-        /// 内圈灰度
+        /// 样式
         /// </summary>
-        public string InnerCircleGary { get; set; }
+        public string WheelStyle { get; set; }
     }
 
 }
