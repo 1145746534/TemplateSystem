@@ -691,9 +691,10 @@ namespace TemplateSystem.Util
                         {
                             HOperatorSet.SetGenericShapeModelParam(templateData.Template, "angle_start", (new HTuple(-180)).TupleRad()
                                 );
+                           
                         }
                         HOperatorSet.SetGenericShapeModelParam(templateData.Template, "border_shape_models", "false");
-
+                     
                         HTuple hv_MatchResultID = new HTuple();
                         HTuple hv_NumMatchResult = new HTuple();
                         HOperatorSet.FindGenericShapeModel(image, templateData.Template, out hv_MatchResultID,

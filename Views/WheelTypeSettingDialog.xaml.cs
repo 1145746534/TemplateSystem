@@ -29,6 +29,7 @@ namespace TemplateSystem.Views
         {
             cmb.Items.Add("成品");
             cmb.Items.Add("半成品");
+            cmb.SelectedIndex = 0;
         }
     }
 }

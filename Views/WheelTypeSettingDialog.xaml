@@ -72,9 +72,9 @@
                         <RowDefinition/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    <TextBlock Text="同一轮型录入多个模板时，请在轮型后加下划线：“_”" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="16" FontWeight="Bold"/>
-                    <TextBlock Grid.Row="1" Text="例如：07119c08_" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="16" FontWeight="Bold"/>
-                    <TextBlock Grid.Row="2" Text="可在轮型后加任意多个下划线，且只能加下划线" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Text="同一轮型可支持录入多个模板" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Grid.Row="1" Text="例如：07119c08  07119c08_ 07119c08__" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Grid.Row="2" Text="软件会自动累加下划线，录入时只需填入轮型号" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="16" FontWeight="Bold"/>
                 </Grid>
             </GroupBox>
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,30,8">

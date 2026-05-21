@@ -20,6 +20,7 @@ using static TemplateSystem.Models.SystemDatas;
 using TemplateSystem.Util;
 using MahApps.Metro.Controls.Dialogs;
 using Prism.Events;
+using System.Windows.Media.Media3D;
 
 
 namespace TemplateSystem.ViewModels
@@ -1157,11 +1158,11 @@ namespace TemplateSystem.ViewModels
         private void ReadImage()
         {
             RecognitionResultDisplay = Visibility.Collapsed;
-            var path = HistoricalImagesPath + @"\" + DateTime.Now.Month.ToString() + @"月\" + DateTime.Now.Day.ToString() + @"日";
+            var path = HistoricalImagesPath;
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
                 InitialDirectory = HistoricalImagesPath,
-                Title = "请选择要制作模板的图片，当日图像存储路径为：" + path,
+                Title = "请选择要制作模板的图片，图像存储路径为：" + path,
                 Filter = "TIF文件|*.tif|JPEG文件|*.jpg|BMP文件|*.bmp|PNG文件|*.png|所有文件(*.*)|*.*",//文件筛选器设定
                 FilterIndex = 1,
             };
@@ -1253,6 +1254,14 @@ namespace TemplateSystem.ViewModels
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "contrast_high", ContrastHigh);
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "contrast_low", ContrastLow);
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "min_size", MinSize);
+                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "iso_scale_max", 1.5);
+                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "iso_scale_min", 0.5);
+                
+                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "angle_start", (new HTuple(-180)).TupleRad());
+                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "angle_extent", (new HTuple(360)).TupleRad());
+
+
+                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "border_shape_models", "false");
             }
 
 
