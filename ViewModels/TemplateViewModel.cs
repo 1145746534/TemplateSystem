@@ -495,7 +495,7 @@ namespace TemplateSystem.ViewModels
 
             RecognitionResultDisplay = Visibility.Collapsed;
             MASKContent = "图像掩膜";
-            EraserSize = 11;
+            EraserSize = 24;
 
             _eventAggregator.GetEvent<AngleChangeEvent>().Subscribe(AngleChange);
 
@@ -1254,8 +1254,8 @@ namespace TemplateSystem.ViewModels
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "contrast_high", ContrastHigh);
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "contrast_low", ContrastLow);
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "min_size", MinSize);
-                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "iso_scale_max", 1.5);
-                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "iso_scale_min", 0.5);
+                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "iso_scale_max", 1.6);
+                HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "iso_scale_min", 0.4);
                 
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "angle_start", (new HTuple(-180)).TupleRad());
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "angle_extent", (new HTuple(360)).TupleRad());
