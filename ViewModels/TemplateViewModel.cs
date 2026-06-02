@@ -707,15 +707,47 @@ namespace TemplateSystem.ViewModels
             templateDataList.Add(model);
         }
 
+
         /// <summary>
         /// 插入整个数据
         /// </summary>
         /// <param name="newDatas"></param>
         private void InsertTemplateDatas(List<sys_bd_Templatedatamodel> newDatas)
         {
+            if (newDatas == null || newDatas.Count == 0)
+                return;
+
             var db = new SqlAccess().SystemDataAccess;
-            db.DbMaintenance.TruncateTable<sys_bd_Templatedatamodel>();
-            db.Insertable(newDatas).ExecuteCommand();
+            // 先获取数据库中已有的数据
+            var existingDatas = db.Queryable<sys_bd_Templatedatamodel>().ToList();
+
+            // 新增：存在的数据更新，不存在的插入
+            foreach (sys_bd_Templatedatamodel newItem in newDatas)
+            {
+                var existing = existingDatas.FirstOrDefault(x => x.WheelType == newItem.WheelType && x.WheelStyle == newItem.WheelStyle);
+                if (existing != null)
+                {
+                    // 已存在，更新
+                    newItem.Index = existing.Index; // 保留原主键
+                    db.Updateable(newItem).ExecuteCommand();
+                }
+                else
+                {
+                    // 不存在，插入
+                    db.Insertable(newItem).ExecuteCommand();
+                }
+            }
+
+            // 删除数据库中多余的数据（在newDatas中不存在的）
+            foreach (sys_bd_Templatedatamodel existingItem in existingDatas)
+            {
+                var exists = newDatas.Any(x => x.WheelType == existingItem.WheelType && x.WheelStyle == existingItem.WheelStyle);
+                if (!exists)
+                {
+                    db.Deleteable<sys_bd_Templatedatamodel>(existingItem).ExecuteCommand();
+                }
+            }
+
             db.Close(); db.Dispose();
         }
 
@@ -729,6 +761,9 @@ namespace TemplateSystem.ViewModels
             db.Updateable(newModel).ExecuteCommand();
             db.Close(); db.Dispose();
         }
+
+
+
 
         /// <summary>
         /// 查找指定 WheelType 的第一条记录
@@ -1627,6 +1662,78 @@ namespace TemplateSystem.ViewModels
             }
         }
 
+        #region 数据恢复 
+
+        /// <summary>
+        /// 从本地.shm文件恢复模板数据到数据库
+        /// </summary>
+        public void RestoreTemplateDatas()
+        {
+            string shmDirectory = @"D:\VisualDatas\NotActiveTemplate";
+            string imagesDirectory = @"D:\VisualDatas\TemplateImages";
+
+            if (!Directory.Exists(shmDirectory))
+            {
+                Console.WriteLine($"目录不存在: {shmDirectory}");
+                return;
+            }
+
+            var shmFiles = Directory.GetFiles(shmDirectory, "*.shm");
+            if (shmFiles.Length == 0)
+            {
+                Console.WriteLine("未找到任何.shm文件");
+                return;
+            }
+
+            var db = new SqlAccess().SystemDataAccess;
+            var existingDatas = db.Queryable<sys_bd_Templatedatamodel>().ToList();
+
+            // 获取第一行数据作为默认参数
+            sys_bd_Templatedatamodel defaultData = existingDatas.FirstOrDefault();
+            float defaultPositionCircleRow = defaultData?.PositionCircleRow ?? 0;
+            float defaultPositionCircleColumn = defaultData?.PositionCircleColumn ?? 0;
+            float defaultPositionCircleRadius = defaultData?.PositionCircleRadius ?? 0;
+            float defaultCircumCircleRadius = defaultData?.CircumCircleRadius ?? 0;
+            float defaultTemplateAreaCenterRow = defaultData?.TemplateAreaCenterRow ?? 0;
+            float defaultTemplateAreaCenterColumn = defaultData?.TemplateAreaCenterColumn ?? 0;
+
+            DateTime now = DateTime.Now;
+            int index = 1;
+
+            foreach (var filePath in shmFiles)
+            {
+                string fileName = Path.GetFileNameWithoutExtension(filePath);
+                string templatePicturePath = Path.Combine(imagesDirectory, fileName + ".tif").Replace(@"\", "/");
+
+                var newData = new sys_bd_Templatedatamodel
+                {
+                    Index = index,
+                    WheelType = fileName,
+                    UnusedDays = 0,
+                    WheelHeight = 0,
+                    WheelStyle = "成品",
+                    PositionCircleRow = defaultPositionCircleRow,
+                    PositionCircleColumn = defaultPositionCircleColumn,
+                    PositionCircleRadius = defaultPositionCircleRadius,
+                    CircumCircleRadius = defaultCircumCircleRadius,
+                    TemplateAreaCenterRow = defaultTemplateAreaCenterRow,
+                    TemplateAreaCenterColumn = defaultTemplateAreaCenterColumn,
+                    FullGary = 0,
+                    CreationTime = now.ToString("yy-MM-dd HH:mm"),
+                    LastUsedTime = now,
+                    UpdateTime = now,
+                    TemplatePath = filePath.Replace(@"\", "/"),
+                    TemplatePicturePath = templatePicturePath
+                };
+
+                db.Insertable(newData).ExecuteCommand();
+                Console.WriteLine($"已恢复: {fileName}");
+                index++;
+            }
+
+            db.Close(); db.Dispose();
+            Console.WriteLine($"数据恢复完成，共恢复 {shmFiles.Length} 条记录");
+        }
 
         public async void GetAllImageTemplateCenter()
         {
@@ -1812,7 +1919,7 @@ namespace TemplateSystem.ViewModels
 
 
         }
-
+        #endregion 
 
         /// <summary>
         /// 参数修改后更新参数与保存
@@ -1833,21 +1940,6 @@ namespace TemplateSystem.ViewModels
             SqlAccess.SystemDatasUpdateable("TemplateStartAngle", TemplateStartAngle.ToString());
             SqlAccess.SystemDatasUpdateable("TemplateEndAngle", TemplateEndAngle.ToString());
         }
-
-        //private string DialogParametersSet(IDialogParameters paraResult, string name)
-        //{
-        //    string value = paraResult.GetValue<string>(name);
-        //    if (value != null)
-        //    {
-        //        SqlAccess.SystemDatasUpDialogParameterseable(name, value);
-        //    }
-        //    return value;
-        //}
-
-
-
-
-
 
 
 
