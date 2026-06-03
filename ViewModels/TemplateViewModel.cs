@@ -659,16 +659,6 @@ namespace TemplateSystem.ViewModels
 
         }
 
-        /// <summary>
-        /// 根据名称获取模板数据 供生成模板区域使用
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public HTuple GetHTupleByName(string name)
-        {
-            TemplatedataModel templatedata = templateDataList.Find((TemplatedataModel x) => x.WheelType == name);
-            return templatedata.Template;
-        }
 
         /// <summary>
         /// 删除使用区模型
@@ -711,49 +701,7 @@ namespace TemplateSystem.ViewModels
         }
 
 
-        /// <summary>
-        /// 插入整个数据
-        /// </summary>
-        /// <param name="newDatas"></param>
-        private void InsertTemplateDatas(List<sys_bd_Templatedatamodel> newDatas)
-        {
-            if (newDatas == null || newDatas.Count == 0)
-                return;
-
-            var db = new SqlAccess().SystemDataAccess;
-            // 先获取数据库中已有的数据
-            var existingDatas = db.Queryable<sys_bd_Templatedatamodel>().ToList();
-
-            // 新增：存在的数据更新，不存在的插入
-            foreach (sys_bd_Templatedatamodel newItem in newDatas)
-            {
-                var existing = existingDatas.FirstOrDefault(x => x.WheelType == newItem.WheelType && x.WheelStyle == newItem.WheelStyle);
-                if (existing != null)
-                {
-                    // 已存在，更新
-                    newItem.Index = existing.Index; // 保留原主键
-                    db.Updateable(newItem).ExecuteCommand();
-                }
-                else
-                {
-                    // 不存在，插入
-                    db.Insertable(newItem).ExecuteCommand();
-                }
-            }
-
-            // 删除数据库中多余的数据（在newDatas中不存在的）
-            foreach (sys_bd_Templatedatamodel existingItem in existingDatas)
-            {
-                var exists = newDatas.Any(x => x.WheelType == existingItem.WheelType && x.WheelStyle == existingItem.WheelStyle);
-                if (!exists)
-                {
-                    db.Deleteable<sys_bd_Templatedatamodel>(existingItem).ExecuteCommand();
-                }
-            }
-
-            db.Close(); db.Dispose();
-        }
-
+      
         /// <summary>
         /// 插入单行数据
         /// </summary>
@@ -789,7 +737,6 @@ namespace TemplateSystem.ViewModels
                 db.Deleteable<sys_bd_Templatedatamodel>(templatedatamodel).ExecuteCommand();
             }
         }
-
 
         /// <summary>
         /// 修改单个模板参数
