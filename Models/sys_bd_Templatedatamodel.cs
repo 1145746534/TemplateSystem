@@ -32,7 +32,7 @@ namespace TemplateSystem.Models
         /// <summary>
         /// 序号
         /// </summary>
-        [SqlSugar.SugarColumn(IsPrimaryKey = true, IsIdentity = false)]
+        [SqlSugar.SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
         public int Index
         {
             get { return _index; }

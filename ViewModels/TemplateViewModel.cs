@@ -21,6 +21,9 @@ using TemplateSystem.Util;
 using MahApps.Metro.Controls.Dialogs;
 using Prism.Events;
 using System.Windows.Media.Media3D;
+using SqlSugar;
+using System.Windows.Markup;
+using System.Configuration.Internal;
 
 
 namespace TemplateSystem.ViewModels
@@ -637,6 +640,9 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         private void LoadedTemplateDatas()
         {
+            // 启动时先清理重复的WheelType数据
+            // CheckAndRemoveDuplicateWheelTypes();
+
             var db = new SqlAccess().SystemDataAccess;
             List<sys_bd_Templatedatamodel> Datas = db.Queryable<sys_bd_Templatedatamodel>().ToList();
             //Datas.ForEach((temp) => temp.UpdateTime = DateTime.Now);
@@ -693,10 +699,15 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         /// <param name="name"></param>
         /// <param name="path"></param>
-        private void UpdateTemplate(string name)
+        private void UpdateTemplate(sys_bd_Templatedatamodel item)
         {
-            int index = templateDataList.FindIndex((TemplatedataModel x) => x.WheelType == name);
-            templateDataList[index].ReleaseTemplate();
+            int index = templateDataList.FindIndex((TemplatedataModel x) => x.WheelType == item.WheelType);
+            if (index != -1)
+            {
+                templateDataList[index].ReleaseTemplate();
+            }
+            else
+                AddTemplate(item);
 
         }
 
@@ -752,6 +763,32 @@ namespace TemplateSystem.ViewModels
         }
 
         /// <summary>
+        /// 插入单行数据
+        /// </summary>
+        /// <param name="templatedatamodel"></param>
+        private void InsertTemplateModel(sys_bd_Templatedatamodel templatedatamodel)
+        {
+            using (var db = new SqlAccess().SystemDataAccess)
+            {
+                db.Insertable(templatedatamodel).ExecuteCommand();
+                //db.Close(); db.Dispose();
+            }
+
+        }
+        /// <summary>
+        /// 删除单行数据
+        /// </summary>
+        /// <param name="templatedatamodel"></param>
+        private void DeleteTemplateModel(sys_bd_Templatedatamodel templatedatamodel)
+        {
+            using (var db = new SqlAccess().SystemDataAccess)
+            {
+                db.Deleteable<sys_bd_Templatedatamodel>(templatedatamodel).ExecuteCommand();
+            }
+        }
+
+
+        /// <summary>
         /// 修改单个模板参数
         /// </summary>
         /// <param name="newModel"></param>
@@ -762,6 +799,36 @@ namespace TemplateSystem.ViewModels
             db.Close(); db.Dispose();
         }
 
+        /// <summary>
+        /// 启动时检查并删除重复的WheelType，保留UpdateTime最新的记录
+        /// </summary>
+        private void CheckAndRemoveDuplicateWheelTypes()
+        {
+            using (var db = new SqlAccess().SystemDataAccess)
+            {
+                var allRecords = db.Queryable<sys_bd_Templatedatamodel>().ToList();
+                var groups = allRecords
+                    .GroupBy(d => d.WheelType)
+                    .Where(g => g.Count() > 1)
+                    .ToList();
+
+                foreach (var group in groups)
+                {
+                    var sorted = group.OrderByDescending(d => d.UpdateTime).ToList();
+                    var toDelete = sorted.Skip(1).ToList();
+                    foreach (var item in toDelete)
+                    {
+                        Console.WriteLine($"删除重复 WheelType: {item.WheelType}, Index: {item.Index}, UpdateTime: {item.UpdateTime}");
+                        //db.Deleteable<sys_bd_Templatedatamodel>(item).ExecuteCommand();
+                    }
+                }
+
+                if (groups.Count == 0)
+                {
+                    Console.WriteLine("没有发现重复的 WheelType");
+                }
+            }
+        }
 
 
 
@@ -804,17 +871,17 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         private void OrganizeTemplateDatas()
         {
-            //内部数据重新整理 数据根据轮型还有轮毂样式排序
-            var datas = TemplateDatas.OrderBy(x => x.WheelType).ThenBy(x => x.WheelStyle).ToList();
-            for (int i = 0; i < datas.Count; i++)
-            {
-                datas[i].Index = i + 1;
-            }
-            //更新窗口显示
-            TemplateDatas.Clear();
-            TemplateDatas.AddRange(datas);
-            //修改数据库
-            InsertTemplateDatas(datas);
+            ////内部数据重新整理 数据根据轮型还有轮毂样式排序
+            //var datas = TemplateDatas.OrderBy(x => x.WheelType).ThenBy(x => x.WheelStyle).ToList();
+            //for (int i = 0; i < datas.Count; i++)
+            //{
+            //    datas[i].Index = i + 1;
+            //}
+            ////更新窗口显示
+            //TemplateDatas.Clear();
+            //TemplateDatas.AddRange(datas);
+            ////修改数据库
+            //InsertTemplateDatas(datas);
         }
 
 
@@ -845,7 +912,7 @@ namespace TemplateSystem.ViewModels
             else return;
         }
 
-       
+
 
 
         /// <summary>
@@ -869,12 +936,23 @@ namespace TemplateSystem.ViewModels
                     {
                         if (result.Parameters.GetValue<string>("set") == "add_OK")
                         {
-                            //插入数据库
-                            InsertTemplateDatas(TemplateDatas.ToList());
-                            int index = Convert.ToInt32(result.Parameters.GetValue<string>("Index"));
-                            DataGridSelectedItem = TemplateDatas[index];
-                            DataGridSelectedIndex = index;
-                            _eventAggregator.GetEvent<ScrollToIndexEvent>().Publish(index);
+                            var data = result.Parameters.GetValue<sys_bd_Templatedatamodel>("templatedatamodel");
+                            InsertTemplateModel(data);  //插入数据库
+                            TemplateDatas.Add(data);
+                            //数据根据轮型还有轮毂样式排序
+                            var newDatas = TemplateDatas.OrderBy(x => x.WheelType).ThenBy(x => x.WheelStyle).ToList();
+                            //数据根据轮型还有轮毂样式排序
+                            TemplateDatas.Clear();
+                            foreach (var item in newDatas)
+                            {
+                                TemplateDatas.Add(item);
+                            }
+                            int findIndex = TemplateDatas.IndexOf(data);
+
+                            DataGridSelectedItem = TemplateDatas[findIndex];
+                            DataGridSelectedIndex = findIndex;//下标
+
+                            _eventAggregator.GetEvent<ScrollToIndexEvent>().Publish(findIndex);
 
                         }
 
@@ -1113,24 +1191,28 @@ namespace TemplateSystem.ViewModels
             HObject wheelContour = null;
             if (recognitionResult.RecognitionWheelType != "NG")
             {
+
                 //定位到识别的轮型
-                int index = TemplateDatas
-                .Select((item, idx) => new { Item = item, Index = idx })
-                .FirstOrDefault(x => x.Item.WheelType == recognitionResult.RecognitionWheelType)?.Index ?? -1;
-                if (index != -1)
+                var selected = TemplateDatas.FirstOrDefault(x => x.WheelType == recognitionResult.RecognitionWheelType);
+                if (selected != null)
                 {
-                    DataGridSelectedItem = TemplateDatas[index];
-                    DataGridSelectedIndex = index;
-                    _eventAggregator.GetEvent<ScrollToIndexEvent>().Publish(index);
+                    int findIndex = TemplateDatas.IndexOf(selected);
+                    DataGridSelectedItem = selected;
+                    DataGridSelectedIndex = findIndex;
+                    _eventAggregator.GetEvent<ScrollToIndexEvent>().Publish(findIndex);
                 }
 
-                //识别成功后 把这个轮形上次使用时间刷新
-                //string _type = recognitionResult.RecognitionWheelType;
-                //var results = templateDataList
-                //    .Where(t => t.WheelType != null &&
-                //                t.WheelType == _type);
-                //foreach (TemplatedataModel item in results)
-                //    item.UseTemplate();
+
+
+                //int index = TemplateDatas
+                //.Select((item, idx) => new { Item = item, Index = idx })
+                //.FirstOrDefault(x => x.Item.WheelType == recognitionResult.RecognitionWheelType)?.Index ?? -1;
+                //if (index != -1)
+                //{
+                //    DataGridSelectedItem = TemplateDatas[index];
+                //    DataGridSelectedIndex = index;
+                //    _eventAggregator.GetEvent<ScrollToIndexEvent>().Publish(index);
+                //}                
 
                 //显示的轮廓
                 templateContour = recognitionResult.RecognitionContour.Clone();
@@ -1171,7 +1253,7 @@ namespace TemplateSystem.ViewModels
             }
             _eventAggregator.GetEvent<WindowCommunicationEvent>().Publish(matchResultModels);
 
-         
+
             recognitionResult.Dispose();
             list.Clear();
             recognitionResult = null;
@@ -1291,7 +1373,7 @@ namespace TemplateSystem.ViewModels
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "min_size", MinSize);
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "iso_scale_max", 1.6);
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "iso_scale_min", 0.4);
-                
+
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "angle_start", (new HTuple(-180)).TupleRad());
                 HOperatorSet.SetGenericShapeModelParam(hv_ModelID, "angle_extent", (new HTuple(360)).TupleRad());
 
@@ -1370,44 +1452,24 @@ namespace TemplateSystem.ViewModels
             {
                 try
                 {
-                    //hv_ModelID
-                    bool isUpdate = false;
                     string tPath = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".tif"; //直接覆盖保存
                     //Halcon中的路径                                                                                                                                                                                                        
                     //string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".ncm";
                     string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".shm";
                     string existPath = aPath.Replace("/", @"\");
                     string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + DataGridSelectedItem.WheelType + ".hobj";
-                    if (File.Exists(existPath))
-                    {
-                        isUpdate = true;
-                    }
+                    
                     HOperatorSet.WriteShapeModel(hv_ModelID, aPath);
                     HOperatorSet.WriteRegion(circleSector, bParh);
                     HOperatorSet.WriteImage(InPoseWheelImage, "tiff", 0, tPath);
-                    // 在后台线程执行耗时操作
-                    //await Task.Run(async () =>
-                    //{
 
-                    //    // 异步保存模板文件
-                    //    await Task.WhenAll(
-                    //        Task.Run(() => HOperatorSet.WriteShapeModel(hv_ModelID, aPath)),
-                    //        Task.Run(() => HOperatorSet.WriteRegion(circleSector, bParh)),
-                    //        Task.Run(() => HOperatorSet.WriteImage(InPoseWheelImage, "tiff", 0, tPath)
-                    //        )
-                    //    );
-                    //});
-
-
-                    if (isUpdate)
-                    {
-                        DataGridSelectedItem.UpdateTime = DateTime.Now;
-                    }
-                    else
+                    // 如果 CreationTime 为空或不包含时间部分(:)，修正为带时间的格式
+                    if (string.IsNullOrEmpty(DataGridSelectedItem.CreationTime) ||
+                        !DataGridSelectedItem.CreationTime.Contains(":"))
                     {
                         DataGridSelectedItem.CreationTime = DateTime.Now.ToString("yy-MM-dd HH:mm");
-                        DataGridSelectedItem.UpdateTime = DateTime.Now;
                     }
+                    DataGridSelectedItem.UpdateTime = DateTime.Now;
                     DataGridSelectedItem.FullGary = float.Parse(FullGary);
                     DataGridSelectedItem.TemplatePath = aPath;
                     DataGridSelectedItem.TemplatePicturePath = tPath;
@@ -1418,15 +1480,11 @@ namespace TemplateSystem.ViewModels
                     DataGridSelectedItem.CircumCircleRadius = (float)circleRadius;
                     DataGridSelectedItem.TemplateAreaCenterRow = (float)TemplateCenterRow;
                     DataGridSelectedItem.TemplateAreaCenterColumn = (float)TemplateCenterColumn;
-                    if (isUpdate) //更新
-                    {
-                        UpdateTemplate(DataGridSelectedItem.WheelType);
-                    }
-                    else
-                    {
-                        //新增
-                        AddTemplate(DataGridSelectedItem);
-                    }
+
+                    UpdateTemplate(DataGridSelectedItem);
+
+
+
                     UpdataTemplateData(DataGridSelectedItem); // 数据层更新
                     //恢复参数默认值
                     _eventAggregator.GetEvent<SetShowEvent>().Publish(false);
@@ -1591,23 +1649,23 @@ namespace TemplateSystem.ViewModels
                 if (File.Exists(bParh))
                     File.Delete(bParh);
 
-                int deleteIndex = DataGridSelectedItem.Index - 1; //被删除项
+                int deleteIndex = TemplateDatas.IndexOf(DataGridSelectedItem); // 被删除项的实际下标
                 string wheelType = DataGridSelectedItem.WheelType;
 
                 DeleteModel(wheelType);
+                DeleteTemplateModel(DataGridSelectedItem);
                 TemplateDatas.RemoveAt(deleteIndex);
-
-                OrganizeTemplateDatas();
+                //OrganizeTemplateDatas();
 
 
                 //光标显示
-                if (TemplateDatas.Count - 1 >= deleteIndex)
+                if (deleteIndex < TemplateDatas.Count)
                 {
                     DataGridSelectedItem = TemplateDatas[deleteIndex];
                     DataGridSelectedIndex = deleteIndex;
                     //EventMessage.MessageHelper.GetEvent<TemplateDataEditEvent>().Publish(DataGridSelectedItem);
                 }
-                else if (TemplateDatas.Count - 1 < deleteIndex && deleteIndex != 0)
+                else if (deleteIndex > 0)
                 {
                     DataGridSelectedItem = TemplateDatas[deleteIndex - 1];
                     DataGridSelectedIndex = deleteIndex - 1;
@@ -1663,6 +1721,7 @@ namespace TemplateSystem.ViewModels
             //数据恢复
             //RestoreTemplateDatas();
             //GetAllImageSmallestCircle();
+            //CheckDuplicateWheelTypes();
         }
 
         #region 数据恢复 
@@ -1701,7 +1760,7 @@ namespace TemplateSystem.ViewModels
             float defaultTemplateAreaCenterColumn = defaultData?.TemplateAreaCenterColumn ?? 0;
 
             DateTime now = DateTime.Now;
-            int index = existingDatas.Count+1;
+            int index = existingDatas.Count + 1;
 
             foreach (var filePath in shmFiles)
             {
@@ -1710,7 +1769,7 @@ namespace TemplateSystem.ViewModels
 
                 var newData = new sys_bd_Templatedatamodel
                 {
-                    Index = index,
+                    //Index = index,
                     WheelType = fileName,
                     UnusedDays = 0,
                     WheelHeight = 0,
@@ -1745,7 +1804,7 @@ namespace TemplateSystem.ViewModels
                 //if (item.TemplateAreaCenterRow == 0 && item.TemplateAreaCenterColumn == 0)
                 {
                     string strPath = item.TemplatePicturePath;
-                    Console.WriteLine($"下标：{item.Index} 地址：{strPath}");
+                    //Console.WriteLine($"下标：{item.Index} 地址：{strPath}");
 
 
                     if (File.Exists(strPath))
@@ -1783,24 +1842,24 @@ namespace TemplateSystem.ViewModels
         public async void GetAllImageSmallestCircle()
         {
 
-
+            int n = 1;
             foreach (sys_bd_Templatedatamodel item in TemplateDatas)
             {
 
                 await Task.Delay(200);
                 DataGridSelectedItem = item;
-                DataGridSelectedIndex = item.Index;
-                _eventAggregator.GetEvent<ScrollToIndexEvent>().Publish(item.Index);
+                DataGridSelectedIndex = n;
+                _eventAggregator.GetEvent<ScrollToIndexEvent>().Publish(n);
                 string strPath = item.TemplatePicturePath;
                 if (File.Exists(strPath))
                 {
 
 
                     HOperatorSet.ReadImage(out HObject Image, strPath);
-                 
+
                     TemplateImage = Image.Clone();
                     float fullGray = (float)GetIntensity(TemplateImage);
-                   
+
                     //显示区域
                     HOperatorSet.GetDomain(TemplateImage, out HObject imageDomain);
                     //外接圆

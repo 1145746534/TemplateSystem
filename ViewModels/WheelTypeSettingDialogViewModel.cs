@@ -174,7 +174,7 @@ namespace TemplateSystem.ViewModels
 
             sys_bd_Templatedatamodel data = new sys_bd_Templatedatamodel
             {
-                Index = int.Parse(Id),
+                
                 WheelType = WheelType,
                 UnusedDays = 0,
                 WheelHeight = float.Parse(WheelHeight),
@@ -184,30 +184,13 @@ namespace TemplateSystem.ViewModels
                 LastUsedTime = DateTime.Now
             };
 
-            TemplateDatas.Add(data);
-            //数据根据轮型还有轮毂样式排序
-            var newDatas = TemplateDatas.OrderBy(x => x.WheelType).ThenBy(x => x.WheelStyle).ToList();
-            int indexReturn = 0;
-            //整理Index
-            for (int i = 0; i < newDatas.Count; i++)
-            {
-                newDatas[i].Index = i + 1;
-                if (WheelType == newDatas[i].WheelType)
-                {
-                    indexReturn = i;
-                }
-            }
-            TemplateDatas.Clear();
-            foreach (var item in newDatas)
-            {
-                TemplateDatas.Add(item);
-            }
+           
 
             //定义弹窗结果
             IDialogResult dialogResult = new DialogResult();
             //将新增数据添加到弹窗结果的Parameters
             dialogResult.Parameters.Add("set", "add_OK");
-            dialogResult.Parameters.Add("Index", indexReturn);
+            dialogResult.Parameters.Add("templatedatamodel", data);
             //关闭弹窗并返回弹窗结果
             RequestClose?.Invoke(dialogResult);
         }
