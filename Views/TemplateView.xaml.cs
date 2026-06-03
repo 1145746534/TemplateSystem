@@ -2,6 +2,7 @@
 using Prism.Events;
 using System;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using TemplateSystem.Models;
 using TemplateSystem.ViewModels;
@@ -31,7 +32,7 @@ namespace TemplateSystem.Views
             if (dataGrid != null && dataGrid.Items.Count > 0 && dataGrid.CurrentItem != null)
             {
                 viewModel.DataGridSelectedItem = dataGrid.CurrentItem as sys_bd_Templatedatamodel;
-                viewModel.DataGridSelectedIndex = viewModel.DataGridSelectedItem.Index - 1;
+                viewModel.DataGridSelectedIndex = viewModel.TemplateDatas.IndexOf(viewModel.DataGridSelectedItem); 
 
                 ContextMenu contextMenu = new ContextMenu();
                 MenuItem menuItem = new MenuItem();

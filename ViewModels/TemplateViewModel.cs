@@ -583,14 +583,7 @@ namespace TemplateSystem.ViewModels
                 int rowIndex = dataGrid.Items.IndexOf(dataGrid.CurrentItem);
                 //获取选中的列索引
                 int columnIndex = dataGrid.CurrentCell.Column.DisplayIndex;
-                //强制分选设置
-                if (columnIndex == 4)
-                {
-                    DataGridSelectedItem = TemplateDatas[DataGridSelectedIndex];
-                    //var sDB = new SqlAccess().SystemDataAccess;
-                    //sDB.Updateable(DataGridSelectedItem).ExecuteCommand();
-                    //sDB.Close(); sDB.Dispose();
-                }
+               
             }
         }
 
@@ -640,8 +633,7 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         private void LoadedTemplateDatas()
         {
-            // 启动时先清理重复的WheelType数据
-            // CheckAndRemoveDuplicateWheelTypes();
+            
 
             var db = new SqlAccess().SystemDataAccess;
             List<sys_bd_Templatedatamodel> Datas = db.Queryable<sys_bd_Templatedatamodel>().ToList();
@@ -768,10 +760,21 @@ namespace TemplateSystem.ViewModels
         /// <param name="templatedatamodel"></param>
         private void InsertTemplateModel(sys_bd_Templatedatamodel templatedatamodel)
         {
+            //using (var db = new SqlAccess().SystemDataAccess)
+            //{
+            //    db.Insertable(templatedatamodel).ExecuteCommand();
+            //    //db.Close(); db.Dispose();
+            //}
             using (var db = new SqlAccess().SystemDataAccess)
             {
-                db.Insertable(templatedatamodel).ExecuteCommand();
-                //db.Close(); db.Dispose();
+                // 插入并返回自增的 Index 值（适合单条插入）
+                long newIndex = db.Insertable(templatedatamodel).ExecuteReturnIdentity();
+
+                // 如果需要将自增值赋回原实体对象，可以这样做
+                templatedatamodel.Index = Convert.ToInt32(newIndex);
+
+                // 或者使用另一种方法直接返回 int 类型
+                // int newIndex = db.Insertable(templatedatamodel).ExecuteReturnIdentity();
             }
 
         }
@@ -861,8 +864,13 @@ namespace TemplateSystem.ViewModels
             //此处必须使用Invoke
             System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
             {
+                
+                //数据根据轮型还有轮毂样式排序
+                List<sys_bd_Templatedatamodel> newDatas = Datas.OrderBy(x => x.WheelType).ThenBy(x => x.WheelStyle).ToList();
+                //数据根据轮型还有轮毂样式排序
                 TemplateDatas.Clear();
-                TemplateDatas = new ObservableCollection<sys_bd_Templatedatamodel>(Datas);
+              
+                TemplateDatas = new ObservableCollection<sys_bd_Templatedatamodel>(newDatas);
             }));
         }
 
@@ -939,14 +947,16 @@ namespace TemplateSystem.ViewModels
                             var data = result.Parameters.GetValue<sys_bd_Templatedatamodel>("templatedatamodel");
                             InsertTemplateModel(data);  //插入数据库
                             TemplateDatas.Add(data);
+
+                            DisplayTemplateDatas(TemplateDatas.ToList());
                             //数据根据轮型还有轮毂样式排序
-                            var newDatas = TemplateDatas.OrderBy(x => x.WheelType).ThenBy(x => x.WheelStyle).ToList();
+                            //List<sys_bd_Templatedatamodel> newDatas = TemplateDatas.OrderBy(x => x.WheelType).ThenBy(x => x.WheelStyle).ToList();
                             //数据根据轮型还有轮毂样式排序
-                            TemplateDatas.Clear();
-                            foreach (var item in newDatas)
-                            {
-                                TemplateDatas.Add(item);
-                            }
+                            //TemplateDatas.Clear();
+                            //foreach (var item in newDatas)
+                            //{
+                            //    TemplateDatas.Add(item);
+                            //}
                             int findIndex = TemplateDatas.IndexOf(data);
 
                             DataGridSelectedItem = TemplateDatas[findIndex];
