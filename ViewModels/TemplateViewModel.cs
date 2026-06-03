@@ -1646,20 +1646,23 @@ namespace TemplateSystem.ViewModels
 
         private void Calibration()
         {
-            if (DataGridSelectedItem != null)
-            {
-                string strPath = DataGridSelectedItem.TemplatePicturePath;
-                if (File.Exists(strPath))
-                {
-                    HOperatorSet.ReadImage(out HObject Image, strPath);
-                    SourceTemplateImage = Image.Clone();
-                    RecognitionTest();
-                    TemplatedataModel target = templateDataList.FirstOrDefault(t => t.WheelType == RecognitionWheelType);
-                    Console.WriteLine($"数据校准 - hv_RefRow:{target.TemplateAreaCenterRow} hv_RefColumn:{target.TemplateAreaCenterColumn}");
+            //if (DataGridSelectedItem != null)
+            //{
+            //    string strPath = DataGridSelectedItem.TemplatePicturePath;
+            //    if (File.Exists(strPath))
+            //    {
+            //        HOperatorSet.ReadImage(out HObject Image, strPath);
+            //        SourceTemplateImage = Image.Clone();
+            //        RecognitionTest();
+            //        TemplatedataModel target = templateDataList.FirstOrDefault(t => t.WheelType == RecognitionWheelType);
+            //        Console.WriteLine($"数据校准 - hv_RefRow:{target.TemplateAreaCenterRow} hv_RefColumn:{target.TemplateAreaCenterColumn}");
 
-                }
+            //    }
 
-            }
+            //}
+            //数据恢复
+            //RestoreTemplateDatas();
+            //GetAllImageSmallestCircle();
         }
 
         #region 数据恢复 
@@ -1669,7 +1672,7 @@ namespace TemplateSystem.ViewModels
         /// </summary>
         public void RestoreTemplateDatas()
         {
-            string shmDirectory = @"D:\VisualDatas\NotActiveTemplate";
+            string shmDirectory = @"D:\VisualDatas\ActiveTemplate";
             string imagesDirectory = @"D:\VisualDatas\TemplateImages";
 
             if (!Directory.Exists(shmDirectory))
@@ -1698,7 +1701,7 @@ namespace TemplateSystem.ViewModels
             float defaultTemplateAreaCenterColumn = defaultData?.TemplateAreaCenterColumn ?? 0;
 
             DateTime now = DateTime.Now;
-            int index = 1;
+            int index = existingDatas.Count+1;
 
             foreach (var filePath in shmFiles)
             {
@@ -1794,7 +1797,10 @@ namespace TemplateSystem.ViewModels
 
 
                     HOperatorSet.ReadImage(out HObject Image, strPath);
+                 
                     TemplateImage = Image.Clone();
+                    float fullGray = (float)GetIntensity(TemplateImage);
+                   
                     //显示区域
                     HOperatorSet.GetDomain(TemplateImage, out HObject imageDomain);
                     //外接圆
@@ -1805,6 +1811,7 @@ namespace TemplateSystem.ViewModels
                     item.PositionCircleColumn = (float)column.D;
                     item.PositionCircleRadius = (float)radius.D;
                     item.CircumCircleRadius = (float)radius.D;
+                    item.FullGary = fullGray;
                     string aPath = ActiveTemplatesPath.Replace(@"\", "/") + @"/" + item.WheelType + ".shm";
                     string bParh = TemplateImagesPath.Replace(@"\", "/") + @"/" + item.WheelType + ".hobj";
 
