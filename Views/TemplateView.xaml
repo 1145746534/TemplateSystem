@@ -10,7 +10,7 @@
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              mc:Ignorable="d" 
              mah:DialogParticipation.Register="{Binding}"
-             d:DesignHeight="640" d:DesignWidth="1280">
+             d:DesignHeight="640" d:DesignWidth="1280" >
     <Border CornerRadius="5">
         <Border.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -144,7 +144,7 @@
                             <TextBlock  Text="{Binding Value, ElementName=EraserSlider, StringFormat={}{0:F0}}"
                                     VerticalAlignment="Center" Margin="0,0,0,0"/>
                         </StackPanel>
-                        <Button Grid.Row="4" Grid.Column="0" Content="数据校准"  FontSize="14" 
+                        <Button Grid.Row="4" Grid.Column="0" Content="数据校准"  FontSize="14" Visibility="Hidden"
                                 Command="{Binding TemplateBtnCommand}" CommandParameter="数据校准"/>
 
 

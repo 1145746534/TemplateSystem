@@ -41,7 +41,7 @@ namespace TemplateSystem.Models
         /// <summary>
         /// 轮毂型号
         /// </summary>
-        [SqlSugar.SugarColumn(IsNullable = false, Length = 25)]
+        [SqlSugar.SugarColumn(IsNullable = false, Length = 100)]
         public string WheelType
         {
             get { return _wheelType; }

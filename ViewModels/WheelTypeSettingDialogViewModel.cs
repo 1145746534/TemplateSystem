@@ -149,19 +149,24 @@ namespace TemplateSystem.ViewModels
                 await this._dialogCoordinator.ShowMessageAsync(this, "错误提示", $"轮型样式未选择，请重新选择！").ContinueWith(t => Console.WriteLine(t.Result));
                 return;
             }
-
-            for (int i = 0; i < 200; i++)
+        
+            for (int i = 0; i < 25; i++)
             {
                 List<sys_bd_Templatedatamodel> _filteredData = TemplateDatas.Where(item => item.WheelType == WheelType).ToList();
                 if (_filteredData != null && _filteredData.Count > 0)
                 {
                     WheelType = WheelType + "_";
-
+                    
                 }
                 else
                 {
                     break;
                 }
+            }
+            if (WheelType.Length >33)
+            {
+                await this._dialogCoordinator.ShowMessageAsync(this, "错误提示", $"单个轮毂模板过多！").ContinueWith(t => Console.WriteLine(t.Result));
+                return;
             }
             //var filteredData = TemplateDatas.Where(item => item.WheelType == WheelType).ToList();
 

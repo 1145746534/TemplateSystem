@@ -24,6 +24,7 @@ using System.Windows.Media.Media3D;
 using SqlSugar;
 using System.Windows.Markup;
 using System.Configuration.Internal;
+using System.Text.Json;
 
 
 namespace TemplateSystem.ViewModels
@@ -533,6 +534,36 @@ namespace TemplateSystem.ViewModels
 
         }
 
+        private void SaveTemplateDatasToJson(ObservableCollection<sys_bd_Templatedatamodel> data, string action)
+        {
+            try
+            {
+                // 1. 确保目录存在
+                string dirPath = @"E:\softwareData";
+                if (!Directory.Exists(dirPath))
+                    Directory.CreateDirectory(dirPath);
+
+                // 2. 生成文件名：TemplateDatas_Open_20260603_143022.json
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string fileName = $"TemplateDatas_{action}_{timestamp}.json";
+                string fullPath = Path.Combine(dirPath, fileName);
+
+                // 3. 序列化为 JSON（格式化输出，便于阅读）
+                string jsonContent = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+
+                // 4. 写入文件
+                File.WriteAllText(fullPath, jsonContent);
+
+                // 可选：记录日志或提示
+                // Debug.WriteLine($"Saved: {fullPath}");
+            }
+            catch (Exception ex)
+            {
+                // 处理异常（如权限不足）
+                // MessageBox.Show($"保存失败: {ex.Message}");
+            }
+        }
+
         private string GetPara(List<sys_bd_systemsettingsdatamodel> systemDatas, string name, string defaultValue)
         {
             try
@@ -651,6 +682,8 @@ namespace TemplateSystem.ViewModels
                     model.CopyPropertiesFrom(item);
                     templateDataList.Add(model);
                 }
+                // 保存启动时的数据
+                SaveTemplateDatasToJson(TemplateDatas, "Open");
             }
             catch (Exception ex)
             {
@@ -1455,6 +1488,9 @@ namespace TemplateSystem.ViewModels
                         ContrastLow = this.ContrastLow,
                         MinSize = this.MinSize
                     });
+
+                    SaveTemplateDatasToJson(TemplateDatas, "btnSave");
+
                 }
                 finally
                 {
